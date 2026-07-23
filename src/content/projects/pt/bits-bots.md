@@ -16,7 +16,7 @@ caseStudy:
 
 ## O problema
 
-Sou voluntário na ANEIS, a acompanhar atividades educativas para crianças sobredotadas. Havia dois problemas: os monitores não tinham uma forma real de acompanhar o progresso de cada criança pelo material — vivia na memória e em notas dispersas — e os próprios materiais e atividades eram difíceis de disponibilizar de forma consistente, especialmente em sessões remotas/híbridas. Construí o Bits & Bots para resolver os dois: uma forma estruturada de publicar conteúdo de robótica, eletrónica e programação, e uma forma de os monitores verem mesmo como cada criança (dos 6 aos 16 anos) está a progredir por ele.
+Sou voluntário na ANEIS, a acompanhar atividades educativas para crianças sobredotadas. Havia dois problemas: os materiais (PDFs, fichas de trabalho) viviam numa pasta do Google Drive, e cada sessão começava com alguém a escrever um link encurtado no quadro para as crianças escreverem — desajeitado, e um novo ponto de fricção sempre que acontecia. Além disso, os monitores não tinham uma forma real de acompanhar o progresso de cada criança pelo material — vivia na memória e em notas dispersas. Construí o Bits & Bots para resolver os dois: um sítio estruturado para publicar conteúdo de robótica, eletrónica e programação que não depende de um link no quadro, e uma forma de os monitores verem mesmo como cada criança (dos 6 aos 16 anos) está a progredir por ele.
 
 ## Decisões de arquitetura
 

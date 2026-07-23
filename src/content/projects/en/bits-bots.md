@@ -16,7 +16,7 @@ caseStudy:
 
 ## The problem
 
-I volunteer with ANEIS, monitoring educational activities for gifted children. Two things were broken: monitors had no real way to track each child's progress through the material — it lived in memory and scattered notes — and the materials and activities themselves were hard to make available consistently, especially for remote/hybrid sessions. I built Bits & Bots to fix both: a structured way to publish robotics, electronics, and programming content, and a way for monitors to actually see how each child (6–16 years old) is progressing through it.
+I volunteer with ANEIS, monitoring educational activities for gifted children. Two things were broken: materials (PDFs, worksheets) lived in a Google Drive folder, and every session started with someone writing a shortened link on the whiteboard for the kids to type in — clunky, and a fresh point of friction every time. On top of that, monitors had no real way to track each child's progress through the material — it lived in memory and scattered notes. I built Bits & Bots to fix both: a structured place to publish robotics, electronics, and programming content that doesn't depend on a whiteboard link, and a way for monitors to actually see how each child (6–16 years old) is progressing through it.
 
 ## Architecture decisions
 
