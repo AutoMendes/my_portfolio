@@ -1,0 +1,9 @@
+import { getViteConfig } from 'astro/config';
+
+export default getViteConfig({
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    globals: true,
+  },
+});
