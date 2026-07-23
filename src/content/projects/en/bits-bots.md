@@ -1,5 +1,5 @@
 ---
-title: "Bits & Bots — STEAM Platform for Gifted Children"
+title: "Bits & Bots — Platform for Gifted Children"
 org: "Independent Project (in partnership with ANEIS Braga)"
 dateRange: "Jul 2026 – Present"
 description: >-

@@ -1,5 +1,5 @@
 ---
-title: "Bits & Bots — Plataforma STEAM para Crianças Sobredotadas"
+title: "Bits & Bots — Plataforma para Crianças Sobredotadas"
 org: "Projeto Independente (em parceria com a ANEIS Braga)"
 dateRange: "Jul 2026 – Presente"
 description: >-
