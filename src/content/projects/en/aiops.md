@@ -38,13 +38,21 @@ A developer opens a PR; seven agents analyze the diff in parallel and post struc
 
 **`iac_generator`, one module, five modes.** The same agent handles `generate` (Terraform/Helm templates from a natural-language prompt), `validate`, `fix`, `ci` (PR/push validation with a blocking verdict), and `cost` (Infracost-based estimation) — one codebase behind all five, rather than a separate tool per concern that would drift apart over time. In `validate` mode it reads the *entire* Terraform file set together rather than one file at a time, which avoids false positives from context that only exists elsewhere in the project (a provider version pinned in a different file, say). Findings are only ever reported with concrete evidence in the code, split into critical (hardcoded credentials, local backend, resources without a lifecycle block), warnings, and suggestions — always resolving to a structured `VERDICT: BLOCKED` or `VERDICT: APPROVED` a pipeline can act on directly.
 
-![The IaC agent's Terraform validation, one finding per line: severity (PASS/FAIL), file, quoted line, and a fix where applicable](/images/aiops/iac_findings_pass_fail.png)
+<div class="image-pair">
+<img src="/images/aiops/iac_findings_pass_fail.png" alt="The IaC agent's Terraform validation, one finding per line: severity (PASS/FAIL), file, quoted line, and a fix where applicable" />
+<img src="/images/aiops/iac_evidence_checked.png" alt="Evidence Checked: every piece of evidence the agent verified before reaching its verdict, plus Improvement Opportunities and the final VERDICT: APPROVED" />
+</div>
 
 **Cloud-agnostic by design, including on-premises.** Beyond Azure, AWS, and GCP, `generate`/`validate`/`fix` ship with dedicated system prompts for local/on-premises setups — Terraform with local providers, Kubernetes namespaces via kubeconfig — since infrastructure without cloud access is still infrastructure that needs validating. Cost estimation in that mode skips Infracost entirely (it has no on-prem pricing to map to) and asks the LLM directly to estimate the resources required instead.
 
 **Drift detection as its own recurring check, not a one-time apply.** Infrastructure isn't assumed to stay the way Terraform left it — a scheduled `terraform plan -detailed-exitcode` against the real cloud state reports one of three outcomes (no drift, error, drift detected) via Terraform's own exit code convention, so manual changes made outside the pipeline get surfaced instead of silently diverging from what's declared in code.
 
 Triggered by changes to Terraform files, `iac_generator` validates the infrastructure configuration and estimates costs via the Infracost CLI, publishing a report on the PR. The verdict (`VERDICT: APPROVED` or `VERDICT: BLOCKED`) decides whether the pipeline proceeds to `terraform apply` or opens a blocking GitHub issue instead.
+
+<div class="image-pair">
+<img src="/images/aiops/infracost_breakdown.png" alt="Cost Analysis (Infracost): per-resource monthly cost breakdown for main-production and main-staging, with subtotals and a total month/year summary" />
+<img src="/images/aiops/infracost_savings.png" alt="High-Cost Resources and Savings Opportunities: the LLM flags the biggest cost drivers and suggests concrete ways to reduce them" />
+</div>
 
 <img src="/images/aiops/uc2_iac_review.png" alt="Diagram: Terraform changes trigger IaC validation and cost estimation, gating terraform apply on the verdict" class="diagram-large" />
 

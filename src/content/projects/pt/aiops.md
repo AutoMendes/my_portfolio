@@ -38,13 +38,21 @@ Um programador abre um PR; sete agentes analisam o diff em paralelo e publicam c
 
 **`iac_generator`, um módulo, cinco modos.** O mesmo agente trata de `generate` (templates Terraform/Helm a partir de uma prompt em linguagem natural), `validate`, `fix`, `ci` (validação de PR/push com veredicto de bloqueio), e `cost` (estimativa via Infracost) — uma única base de código atrás dos cinco, em vez de uma ferramenta separada por preocupação que divergiria ao longo do tempo. No modo `validate` lê o conjunto *completo* de ficheiros Terraform em conjunto em vez de um de cada vez, o que evita falsos positivos por falta de contexto que só existe noutro ficheiro do projeto (uma versão de provider fixada noutro sítio, por exemplo). Os problemas só são reportados com evidência concreta no código, divididos entre críticos (credenciais hardcoded, backend local, recursos sem bloco lifecycle), avisos e sugestões — resolvendo sempre num `VERDICT: BLOCKED` ou `VERDICT: APPROVED` estruturado sobre o qual uma pipeline pode agir diretamente.
 
-![A validação Terraform do agente de IaC, uma descoberta por linha: severidade (PASS/FAIL), ficheiro, linha citada, e uma correção quando aplicável](/images/aiops/iac_findings_pass_fail.png)
+<div class="image-pair">
+<img src="/images/aiops/iac_findings_pass_fail.png" alt="A validação Terraform do agente de IaC, uma descoberta por linha: severidade (PASS/FAIL), ficheiro, linha citada, e uma correção quando aplicável" />
+<img src="/images/aiops/iac_evidence_checked.png" alt="Evidence Checked: cada prova que o agente verificou antes de chegar ao veredicto, mais Improvement Opportunities e o VERDICT: APPROVED final" />
+</div>
 
 **Agnóstico a cloud por design, incluindo on-premises.** Para além de Azure, AWS e GCP, `generate`/`validate`/`fix` vêm com prompts de sistema dedicados para ambientes locais/on-premises — Terraform com providers locais, namespaces Kubernetes via kubeconfig — porque infraestrutura sem acesso a cloud continua a ser infraestrutura que precisa de validação. A estimativa de custos nesse modo dispensa completamente o Infracost (não tem preços on-prem para mapear) e pede diretamente ao LLM para estimar os recursos necessários.
 
 **Deteção de drift como uma verificação recorrente própria, não uma aplicação única.** A infraestrutura não é assumida como continuando exatamente como o Terraform a deixou — um `terraform plan -detailed-exitcode` agendado contra o estado real da cloud reporta um de três resultados (sem drift, erro, drift detetado) através da própria convenção de exit code do Terraform, para alterações manuais feitas fora da pipeline serem expostas em vez de divergirem silenciosamente do que está declarado em código.
 
 Acionado por alterações a ficheiros Terraform, o `iac_generator` valida a configuração de infraestrutura e estima custos via o CLI do Infracost, publicando um relatório no PR. O veredicto (`VERDICT: APPROVED` ou `VERDICT: BLOCKED`) decide se a pipeline avança para `terraform apply` ou abre uma issue de bloqueio no GitHub.
+
+<div class="image-pair">
+<img src="/images/aiops/infracost_breakdown.png" alt="Cost Analysis (Infracost): custo mensal por recurso para main-production e main-staging, com subtotais e um resumo de total mensal/anual" />
+<img src="/images/aiops/infracost_savings.png" alt="High-Cost Resources e Savings Opportunities: o LLM assinala os maiores fatores de custo e sugere formas concretas de os reduzir" />
+</div>
 
 <img src="/images/aiops/uc2_iac_review.png" alt="Diagrama: alterações Terraform acionam validação de IaC e estimativa de custos, condicionando o terraform apply ao veredicto" class="diagram-large" />
 
