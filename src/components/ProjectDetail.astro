@@ -1,17 +1,13 @@
 ---
 import { render } from 'astro:content';
-import { useTranslations } from '../i18n/utils';
 import { getTagColor } from '../lib/tagColor';
-import type { Locale } from '../i18n/ui';
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
   project: CollectionEntry<'projects'>;
-  locale: Locale;
 }
 
-const { project, locale } = Astro.props;
-const t = useTranslations(locale);
+const { project } = Astro.props;
 const { Content } = await render(project);
 ---
 
@@ -32,11 +28,9 @@ const { Content } = await render(project);
 
 	<p class="mt-6 leading-relaxed" style={{ color: 'var(--text-body)' }}>{project.data.description}</p>
 
-	{project.data.caseStudy ? (
+	{project.data.caseStudy && (
 		<div class="prose mt-8">
 			<Content />
 		</div>
-	) : (
-		<p class="mt-8 italic" style={{ color: 'var(--text-muted)' }}>{t('projects.caseStudySoon')}</p>
 	)}
 </article>

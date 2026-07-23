@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* Theme tokens ported from whoami_cv/src/index.css, so this site and the CV
    share the same dark/light accent language. */
@@ -60,4 +61,16 @@ summary::-webkit-details-marker {
 .tag-scroll::-webkit-scrollbar-thumb {
   background: var(--border-default);
   border-radius: 2px;
+}
+
+.prose {
+  --tw-prose-body: var(--text-body);
+  --tw-prose-headings: var(--text-heading);
+  --tw-prose-links: var(--accent);
+  --tw-prose-bold: var(--text-heading);
+  --tw-prose-bullets: var(--text-muted);
+  --tw-prose-hr: var(--border-default);
+  --tw-prose-quotes: var(--text-secondary);
+  --tw-prose-quote-borders: var(--border-default);
+  --tw-prose-code: var(--text-heading);
 }
