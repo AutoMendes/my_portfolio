@@ -8,6 +8,6 @@ description: >-
   OCR (EasyOCR) para autenticação, e um LLM local (Ollama/Mistral) a descrever atrações turísticas
   ao longo da melhor rota — entre 18 cidades portuguesas, com mapas interativos via Folium e
   roteamento OSRM, numa interface Streamlit.
-tags: ["Python", "Search Algorithms", "OCR (EasyOCR)", "LLMs", "Folium/OSRM"]
+tags: ["Python", "LLMs"]
 featured: true
 ---
