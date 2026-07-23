@@ -94,8 +94,10 @@ const arcadeProjects = allProjects.map((project) => ({
 
 		<footer class="flex flex-col items-center justify-center gap-2 border-t border-gray-200 px-4 py-4 text-center text-sm text-gray-500 dark:border-gray-800 sm:flex-row sm:gap-4">
 			<span>&copy; {new Date().getFullYear()} Tiago Lobo</span>
-			<SocialIcons />
-			<ArcadeModeController projects={arcadeProjects} client:load />
+			<div class="flex items-center gap-4">
+				<SocialIcons />
+				<ArcadeModeController projects={arcadeProjects} client:load />
+			</div>
 		</footer>
 	</body>
 </html>
