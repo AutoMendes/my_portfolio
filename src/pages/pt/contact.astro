@@ -1,36 +1,15 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContactLink from '../../components/ContactLink.astro';
 ---
 
 <BaseLayout title="Contacto — Tiago Lobo">
 	<h1 class="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>Contacto</h1>
 
 	<div class="mt-6 flex max-w-3xl flex-wrap gap-4">
-		<a
-			href="mailto:tiago.lobop@gmail.com"
-			class="rounded border px-4 py-2 text-sm font-medium"
-			style={{ borderColor: 'var(--border-default)', color: 'var(--text-body)' }}
-		>
-			✉️ tiago.lobop@gmail.com
-		</a>
-		<a
-			href="https://linkedin.com/in/tiagolobo10"
-			target="_blank"
-			rel="noopener noreferrer"
-			class="rounded border px-4 py-2 text-sm font-medium"
-			style={{ borderColor: 'var(--border-default)', color: 'var(--text-body)' }}
-		>
-			LinkedIn
-		</a>
-		<a
-			href="https://github.com/AutoMendes"
-			target="_blank"
-			rel="noopener noreferrer"
-			class="rounded border px-4 py-2 text-sm font-medium"
-			style={{ borderColor: 'var(--border-default)', color: 'var(--text-body)' }}
-		>
-			GitHub
-		</a>
+		<ContactLink href="mailto:tiago.lobop@gmail.com" icon="mail">tiago.lobop@gmail.com</ContactLink>
+		<ContactLink href="https://linkedin.com/in/tiagolobo10" icon="linkedin" external>LinkedIn</ContactLink>
+		<ContactLink href="https://github.com/AutoMendes" icon="github" external>GitHub</ContactLink>
 	</div>
 
 	<form
