@@ -37,7 +37,3 @@ Nada da arquitetura acima foi a parte difícil — a rede do WSL2 foi. O backend
 ## Resultado (em curso)
 
 Tanto a plataforma web como a app dos monitores estão em produção, com conteúdo de cursos, quizzes e acompanhamento de progresso a funcionar de ponta a ponta. É um projeto ativo, não terminado — continuo a ser o único developer, por isso a cobertura de testes está intencionalmente concentrada nos módulos com maior probabilidade de falhar em silêncio (autenticação, acompanhamento de progresso) em vez de tudo.
-
-## O que faria diferente
-
-Alargar a cobertura de testes antes de adicionar mais funcionalidades, não depois — neste momento está concentrada em dois ou três módulos críticos por necessidade, e essa é uma dívida de que tenho consciência. Também gostaria de ter suporte offline a sério na app dos monitores mais cedo: as salas de aula nem sempre têm Wi-Fi fiável, e neste momento uma ligação que cai a meio de uma sessão é uma experiência mais brusca do que devia.

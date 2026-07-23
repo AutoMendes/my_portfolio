@@ -37,7 +37,3 @@ A solução não foi um modelo mais inteligente — foi aceitar que uma única p
 ## Resultado
 
 Demo de ponta a ponta: fotografa ou escreve uma matrícula, ficas autenticado (ou registado na hora, se for nova), escolhes duas de 18 cidades e um algoritmo, obténs uma rota desenhada num mapa real com roteamento OSRM passo a passo, e lês uma descrição gerada localmente sobre o que ver pelo caminho. Os quatro algoritmos produzem visivelmente caminhos diferentes para o mesmo par de cidades, que era todo o objetivo — dá para *ver* o trade-off entre custo/velocidade/otimalidade em vez de só o ler num relatório.
-
-## O que faria diferente
-
-A heurística é estática (distância em linha reta), o que é aceitável para uma demo mas não reflete tráfego real. Uma versão que trouxesse custos de roteamento reais do OSRM para dentro da própria heurística, em vez de usar o OSRM só para desenhar o caminho final, tornaria a comparação "qual algoritmo ganha" mais honesta. Também treinaria um modelo de OCR específico para matrículas em vez de depender inteiramente do pré-processamento — o pipeline de doze tentativas é um bom contorno, não uma correção a sério.

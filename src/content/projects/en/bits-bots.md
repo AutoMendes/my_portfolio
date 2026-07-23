@@ -37,7 +37,3 @@ None of the architecture above was the hard part — WSL2 networking was. The ba
 ## Result (in progress)
 
 Both the web platform and the monitor app are live and deployed, with course content, quizzes, and progress tracking working end to end. It's an active project, not a finished one — I'm still the only developer, so test coverage is intentionally focused on the modules most likely to break silently (auth, progress tracking) rather than everything.
-
-## What I'd do differently
-
-Broaden test coverage before adding more features, not after — right now it's concentrated on a couple of critical modules by necessity, and that's a debt I'm aware of. I'd also want proper offline support in the monitor app sooner: classrooms don't always have reliable Wi-Fi, and right now a dropped connection mid-session is a rough experience rather than a graceful one.

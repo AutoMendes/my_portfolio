@@ -36,7 +36,3 @@ The fix wasn't a smarter model — it was accepting that a single pass would nev
 ## Result
 
 End-to-end demo: photograph or type a plate, get authenticated (or registered on the spot if it's new), pick two of 18 cities and an algorithm, get a route drawn on a real map with turn-by-turn OSRM routing, and read a locally-generated description of what to see along the way. All four algorithms visibly produce different paths on the same city pair, which was the whole point — you can *see* the cost/speed/optimality trade-off instead of just reading about it in a report.
-
-## What I'd do differently
-
-The heuristic is static (straight-line distance), which is fine for a demo but doesn't reflect real traffic. A version that pulled live routing costs from OSRM into the heuristic itself, rather than only using OSRM for drawing the final path, would make the "which algorithm wins" comparison more honest. I'd also train a small plate-specific OCR model instead of leaning entirely on preprocessing — the twelve-attempt pipeline is a good workaround, not a real fix.
