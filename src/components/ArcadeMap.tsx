@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
-import { clampMove, GRID_HEIGHT, GRID_WIDTH, tileToSlug, type Position } from '../lib/arcadeMap';
+import {
+  getBuildingPositions,
+  getCameraOrigin,
+  MAP_HEIGHT,
+  MAP_WIDTH,
+  PLAYER_START,
+  tileTypeAt,
+  tryMove,
+  type Position,
+} from '../lib/overworld';
 
 export interface ArcadeProject {
   slug: string;
@@ -13,7 +22,10 @@ interface ArcadeMapProps {
   onClose: () => void;
 }
 
-const TILE_COLORS = ['#e07a5f', '#3d5a80', '#81b29a', '#f2cc8f', '#9b5de5', '#00bbf9', '#f15bb5', '#fee440', '#4ea8de'];
+const TILE_PX = 40;
+const VIEWPORT_TILES = 7;
+
+const BUILDING_COLORS = ['#e07a5f', '#3d5a80', '#81b29a', '#f2cc8f', '#9b5de5', '#00bbf9', '#f15bb5', '#fee440', '#4ea8de'];
 
 const KEY_DELTAS: Record<string, [number, number]> = {
   ArrowUp: [0, -1],
@@ -27,11 +39,14 @@ const KEY_DELTAS: Record<string, [number, number]> = {
 };
 
 export function ArcadeMap({ projects, onClose }: ArcadeMapProps) {
-  const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
+  const [position, setPosition] = useState<Position>(PLAYER_START);
 
-  const slugs = projects.map((p) => p.slug);
-  const currentSlug = tileToSlug(position, slugs);
-  const currentProject = projects.find((p) => p.slug === currentSlug) ?? null;
+  const buildingPositions = getBuildingPositions();
+  const buildingAt = (pos: Position) =>
+    buildingPositions.findIndex((b) => b.x === pos.x && b.y === pos.y);
+
+  const currentBuildingIndex = buildingAt(position);
+  const currentProject = currentBuildingIndex >= 0 ? (projects[currentBuildingIndex] ?? null) : null;
 
   useEffect(() => {
     function handleKeydown(event: KeyboardEvent) {
@@ -41,7 +56,8 @@ export function ArcadeMap({ projects, onClose }: ArcadeMapProps) {
       }
       const delta = KEY_DELTAS[event.key];
       if (delta) {
-        setPosition((prev) => clampMove(prev, delta[0], delta[1]));
+        event.preventDefault();
+        setPosition((prev) => tryMove(prev, delta[0], delta[1]));
       }
     }
 
@@ -49,7 +65,11 @@ export function ArcadeMap({ projects, onClose }: ArcadeMapProps) {
     return () => window.removeEventListener('keydown', handleKeydown);
   }, [onClose]);
 
-  const tiles = Array.from({ length: GRID_WIDTH * GRID_HEIGHT }, (_, i) => i);
+  const camera = getCameraOrigin(position, VIEWPORT_TILES, VIEWPORT_TILES);
+  const tiles = Array.from({ length: MAP_WIDTH * MAP_HEIGHT }, (_, i) => ({
+    x: i % MAP_WIDTH,
+    y: Math.floor(i / MAP_WIDTH),
+  }));
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-black/90 p-6">
@@ -58,24 +78,47 @@ export function ArcadeMap({ projects, onClose }: ArcadeMapProps) {
       </button>
 
       <div
-        className="grid gap-1"
-        style={{ gridTemplateColumns: `repeat(${GRID_WIDTH}, 3rem)`, gridTemplateRows: `repeat(${GRID_HEIGHT}, 3rem)` }}
+        className="relative overflow-hidden border-2 border-white/20"
+        style={{ width: VIEWPORT_TILES * TILE_PX, height: VIEWPORT_TILES * TILE_PX }}
       >
-        {tiles.map((i) => {
-          const x = i % GRID_WIDTH;
-          const y = Math.floor(i / GRID_WIDTH);
-          const slug = tileToSlug({ x, y }, slugs);
-          const isPlayer = position.x === x && position.y === y;
-          return (
-            <div
-              key={i}
-              className="relative flex items-center justify-center text-xl"
-              style={{ background: slug ? TILE_COLORS[i % TILE_COLORS.length] : '#222' }}
-            >
-              {isPlayer && <span aria-label="player">🧑</span>}
-            </div>
-          );
-        })}
+        <div
+          className="absolute"
+          style={{
+            width: MAP_WIDTH * TILE_PX,
+            height: MAP_HEIGHT * TILE_PX,
+            transform: `translate(${-camera.x * TILE_PX}px, ${-camera.y * TILE_PX}px)`,
+          }}
+        >
+          {tiles.map(({ x, y }) => {
+            const type = tileTypeAt({ x, y });
+            const buildingIndex = type === 'building' ? buildingAt({ x, y }) : -1;
+            const background =
+              type === 'tree' ? '#1b4332' : type === 'building' ? BUILDING_COLORS[buildingIndex % BUILDING_COLORS.length] : '#74c69d';
+            return (
+              <div
+                key={`${x}-${y}`}
+                className="absolute flex items-center justify-center text-xs"
+                style={{ left: x * TILE_PX, top: y * TILE_PX, width: TILE_PX, height: TILE_PX, background }}
+              >
+                {type === 'tree' && '🌲'}
+                {type === 'building' && '🏠'}
+              </div>
+            );
+          })}
+        </div>
+
+        <div
+          className="absolute flex items-center justify-center text-2xl"
+          style={{
+            left: (position.x - camera.x) * TILE_PX,
+            top: (position.y - camera.y) * TILE_PX,
+            width: TILE_PX,
+            height: TILE_PX,
+          }}
+          aria-label="player"
+        >
+          🧑
+        </div>
       </div>
 
       {currentProject && (
@@ -88,7 +131,7 @@ export function ArcadeMap({ projects, onClose }: ArcadeMapProps) {
         </div>
       )}
 
-      <p className="text-sm text-white/70">Arrow keys / WASD to move · Esc to close</p>
+      <p className="text-sm text-white/70">Arrow keys / WASD to walk · Esc to close</p>
     </div>
   );
 }
