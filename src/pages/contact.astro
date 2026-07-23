@@ -16,17 +16,6 @@ const status = Astro.url.searchParams.get('sent') ? 'sent' : Astro.url.searchPar
 		</div>
 
 		<div class="max-w-md">
-			{status === 'sent' && (
-				<p class="mb-4 rounded border px-4 py-2 text-sm" style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
-					Message sent — thanks! I'll get back to you soon.
-				</p>
-			)}
-			{status === 'error' && (
-				<p class="mb-4 rounded border px-4 py-2 text-sm" style={{ borderColor: '#e07a5f', color: '#e07a5f' }}>
-					Something went wrong sending your message — please try again, or email me directly.
-				</p>
-			)}
-
 			<form action="/api/contact" method="POST" class="space-y-4">
 				<input type="hidden" name="redirect" value="/contact" />
 				<div>
@@ -83,4 +72,35 @@ const status = Astro.url.searchParams.get('sent') ? 'sent' : Astro.url.searchPar
 			</form>
 		</div>
 	</div>
+
+	{status && (
+		<div
+			id="contact-toast"
+			class="fixed right-6 top-6 z-50 max-w-xs rounded border px-4 py-3 text-sm shadow-lg transition-opacity duration-500"
+			style={
+				status === 'sent'
+					? { borderColor: 'var(--accent)', color: 'var(--accent)', background: 'var(--bg-chrome)' }
+					: { borderColor: '#e07a5f', color: '#e07a5f', background: 'var(--bg-chrome)' }
+			}
+		>
+			{status === 'sent'
+				? "Message sent — thanks! I'll get back to you soon."
+				: 'Something went wrong sending your message — please try again, or email me directly.'}
+		</div>
+	)}
 </BaseLayout>
+
+<script>
+	const toast = document.getElementById('contact-toast');
+	if (toast) {
+		setTimeout(() => {
+			toast.style.opacity = '0';
+			setTimeout(() => toast.remove(), 500);
+		}, 4000);
+
+		const url = new URL(window.location.href);
+		url.searchParams.delete('sent');
+		url.searchParams.delete('error');
+		window.history.replaceState({}, '', url);
+	}
+</script>
