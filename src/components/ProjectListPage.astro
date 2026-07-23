@@ -2,7 +2,6 @@
 import ProjectCard from './ProjectCard.astro';
 import { getAllProjects } from '../lib/projects';
 import { useTranslations } from '../i18n/utils';
-import { getTagColor } from '../lib/tagColor';
 import type { Locale } from '../i18n/ui';
 
 interface Props {
@@ -20,22 +19,28 @@ const allTags = [...new Set(projects.flatMap((p) => p.data.tags))].sort();
 
 <h1 class="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>{t('projects.title')}</h1>
 
-<p class="mt-3 text-sm" style={{ color: 'var(--text-muted)' }} id="tag-filters-hint">{t('projects.filterHint')}</p>
+<p class="mt-3 text-sm" style={{ color: 'var(--text-muted)' }}>{t('projects.filterHint')}</p>
 <div class="mt-2 flex flex-wrap gap-2" id="tag-filters">
-	{allTags.map((tag) => {
-		const color = getTagColor(tag);
-		return (
-			<button
-				type="button"
-				data-tag={tag}
-				data-color={color}
-				class="tag-filter-btn rounded px-3 py-1 text-sm font-medium transition"
-				style={{ background: `${color}26`, color }}
-			>
-				{tag}
-			</button>
-		);
-	})}
+	<button
+		type="button"
+		data-tag=""
+		aria-pressed="true"
+		class="tag-filter-btn rounded px-3 py-1 text-sm font-medium transition"
+		style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
+	>
+		{t('projects.filterAll')}
+	</button>
+	{allTags.map((tag) => (
+		<button
+			type="button"
+			data-tag={tag}
+			aria-pressed="false"
+			class="tag-filter-btn rounded px-3 py-1 text-sm font-medium transition"
+			style={{ background: 'var(--bg-chrome)', color: 'var(--text-secondary)' }}
+		>
+			{tag}
+		</button>
+	))}
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2" id="project-grid">
@@ -53,10 +58,21 @@ const allTags = [...new Set(projects.flatMap((p) => p.data.tags))].sort();
 
 <script>
 	const filterButtons = document.querySelectorAll<HTMLButtonElement>('.tag-filter-btn');
+	const allButton = document.querySelector<HTMLButtonElement>('.tag-filter-btn[data-tag=""]');
+	const tagButtons = document.querySelectorAll<HTMLButtonElement>('.tag-filter-btn[data-tag]:not([data-tag=""])');
 	const cards = document.querySelectorAll<HTMLElement>('#project-grid [data-tags]');
 	const selected = new Set<string>();
 
-	function applyFilter() {
+	function paint(button: HTMLButtonElement, active: boolean) {
+		button.setAttribute('aria-pressed', String(active));
+		button.style.background = active ? 'var(--accent)' : 'var(--bg-chrome)';
+		button.style.color = active ? 'var(--accent-text)' : 'var(--text-secondary)';
+	}
+
+	function render() {
+		paint(allButton!, selected.size === 0);
+		tagButtons.forEach((button) => paint(button, selected.has(button.dataset.tag ?? '')));
+
 		cards.forEach((card) => {
 			const cardTags = (card.dataset.tags ?? '').split(',');
 			const visible = selected.size === 0 || cardTags.some((tag) => selected.has(tag));
@@ -64,25 +80,17 @@ const allTags = [...new Set(projects.flatMap((p) => p.data.tags))].sort();
 		});
 	}
 
-	filterButtons.forEach((button) => {
+	allButton?.addEventListener('click', () => {
+		selected.clear();
+		render();
+	});
+
+	tagButtons.forEach((button) => {
 		button.addEventListener('click', () => {
 			const tag = button.dataset.tag ?? '';
-			const color = button.dataset.color ?? '';
-			const isSelected = selected.has(tag);
-
-			if (isSelected) {
-				selected.delete(tag);
-				button.style.background = `${color}26`;
-				button.style.color = color;
-				button.setAttribute('aria-pressed', 'false');
-			} else {
-				selected.add(tag);
-				button.style.background = color;
-				button.style.color = '#fff';
-				button.setAttribute('aria-pressed', 'true');
-			}
-
-			applyFilter();
+			if (selected.has(tag)) selected.delete(tag);
+			else selected.add(tag);
+			render();
 		});
 	});
 </script>
