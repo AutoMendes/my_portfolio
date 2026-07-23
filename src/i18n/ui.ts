@@ -12,7 +12,7 @@ export const ui = {
     'nav.about': 'About',
     'nav.contact': 'Contact',
     'projects.title': 'Projects',
-    'projects.filterAll': 'All',
+    'projects.filterHint': 'Click a tag to filter — select as many as you like.',
     'projects.caseStudySoon': 'Case study coming soon.',
   },
   pt: {
@@ -21,7 +21,7 @@ export const ui = {
     'nav.about': 'Sobre',
     'nav.contact': 'Contacto',
     'projects.title': 'Projetos',
-    'projects.filterAll': 'Todos',
+    'projects.filterHint': 'Clica numa tag para filtrar — podes selecionar várias.',
     'projects.caseStudySoon': 'Case study brevemente.',
   },
 } as const;

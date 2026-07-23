@@ -43,3 +43,10 @@ body {
   color: var(--text-body);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+summary {
+  list-style: none;
+}
+summary::-webkit-details-marker {
+  display: none;
+}

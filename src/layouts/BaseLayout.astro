@@ -51,18 +51,39 @@ const arcadeProjects = allProjects.map((project) => ({
 		)}
 	</head>
 	<body class="flex min-h-screen flex-col">
-		<header class="border-b border-gray-200 dark:border-gray-800">
+		<header class="border-b" style={{ borderColor: 'var(--border-default)' }}>
 			<nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-				<a href={`${prefix}/`} class="font-semibold">Tiago Lobo</a>
-				<ul class="flex gap-6 text-sm">
+				<a href={`${prefix}/`} class="font-semibold" style={{ color: 'var(--text-heading)' }}>Tiago Lobo</a>
+
+				<ul class="hidden gap-6 text-sm md:flex">
 					<li><a href={`${prefix}/`}>{t('nav.home')}</a></li>
 					<li><a href={`${prefix}/projects`}>{t('nav.projects')}</a></li>
 					<li><a href={`${prefix}/about`}>{t('nav.about')}</a></li>
 					<li><a href={`${prefix}/contact`}>{t('nav.contact')}</a></li>
 				</ul>
-				<div class="flex items-center gap-4">
+
+				<div class="flex items-center gap-3">
 					<LanguageSwitcher locale={lang} pathname={Astro.url.pathname} />
 					<ThemeToggle client:load />
+
+					<details class="relative md:hidden">
+						<summary
+							class="flex h-9 w-9 cursor-pointer items-center justify-center rounded border text-lg"
+							style={{ borderColor: 'var(--border-default)', color: 'var(--text-body)' }}
+							aria-label="Menu"
+						>
+							☰
+						</summary>
+						<ul
+							class="absolute right-0 z-20 mt-2 flex w-40 flex-col gap-1 rounded border p-2 text-sm shadow-lg"
+							style={{ borderColor: 'var(--border-default)', background: 'var(--bg-chrome)' }}
+						>
+							<li><a class="block rounded px-2 py-1.5" href={`${prefix}/`}>{t('nav.home')}</a></li>
+							<li><a class="block rounded px-2 py-1.5" href={`${prefix}/projects`}>{t('nav.projects')}</a></li>
+							<li><a class="block rounded px-2 py-1.5" href={`${prefix}/about`}>{t('nav.about')}</a></li>
+							<li><a class="block rounded px-2 py-1.5" href={`${prefix}/contact`}>{t('nav.contact')}</a></li>
+						</ul>
+					</details>
 				</div>
 			</nav>
 		</header>
