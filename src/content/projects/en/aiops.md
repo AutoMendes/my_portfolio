@@ -54,6 +54,10 @@ The architecture ended up organized as five sequential phases covering the full 
 
 ![UC4 diagram: developer interacts with IaC, Kubernetes, and GitHub tools conversationally through the MCP layer via Claude Desktop or CLI](/images/aiops/uc4_mcp.png)
 
+At the component level, this is an LLM client (Claude Desktop or the Claude Code CLI) consuming interfaces exposed by the MCP servers over the MCP/stdio protocol, with each server wrapping an external system in turn — Kubernetes via `kubectl` subprocess calls, GitHub and Infracost via HTTPS, Terraform via CLI subprocess and static analysis tools (`tfsec`, `checkov`).
+
+![UML component diagram of the MCP layer: an LLM client consuming MCP servers over stdio, each server wrapping an external system via HTTPS or subprocess](/images/aiops/mcp_componentes.png)
+
 **UC5 — IaC management via the desktop app.** For a DevOps user without CLI or CI/CD pipeline familiarity: validate IaC configurations, generate templates, estimate costs (cloud or local mode), and detect drift, choosing the LLM provider and — in local mode — a pre-configured machine profile. Unchanged IaC files between runs are served from an in-memory cache instead of re-hitting the API.
 
 ![UC5 diagram: a DevOps user validates, generates, and estimates costs for IaC through the desktop app's GUI](/images/aiops/uc5_desktop_app.png)
