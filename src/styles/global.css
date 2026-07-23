@@ -74,3 +74,12 @@ summary::-webkit-details-marker {
   --tw-prose-quote-borders: var(--border-default);
   --tw-prose-code: var(--text-heading);
 }
+
+.prose img {
+  max-width: 560px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid var(--border-default);
+  border-radius: 0.375rem;
+}
