@@ -16,7 +16,7 @@ caseStudy:
 
 ## O problema
 
-Sou voluntário na ANEIS, a acompanhar atividades educativas para crianças sobredotadas. O que faltava era uma forma de dar a essas crianças (dos 6 aos 16 anos) cursos estruturados de robótica, eletrónica e programação que pudessem percorrer ao seu próprio ritmo, com os monitores a conseguirem ver o progresso sem andarem atrás de papéis ou folhas de cálculo. Construí o Bits & Bots para preencher essa lacuna.
+Sou voluntário na ANEIS, a acompanhar atividades educativas para crianças sobredotadas. Havia dois problemas: os monitores não tinham uma forma real de acompanhar o progresso de cada criança pelo material — vivia na memória e em notas dispersas — e os próprios materiais e atividades eram difíceis de disponibilizar de forma consistente, especialmente em sessões remotas/híbridas. Construí o Bits & Bots para resolver os dois: uma forma estruturada de publicar conteúdo de robótica, eletrónica e programação, e uma forma de os monitores verem mesmo como cada criança (dos 6 aos 16 anos) está a progredir por ele.
 
 ## Decisões de arquitetura
 

@@ -16,7 +16,7 @@ caseStudy:
 
 ## The problem
 
-I volunteer with ANEIS, monitoring educational activities for gifted children. What was missing was a way to give those children (6–16 years old) structured courses in robotics, electronics, and programming that they could work through at their own pace, with monitors able to see progress without chasing paper records or spreadsheets. I built Bits & Bots to fill that gap.
+I volunteer with ANEIS, monitoring educational activities for gifted children. Two things were broken: monitors had no real way to track each child's progress through the material — it lived in memory and scattered notes — and the materials and activities themselves were hard to make available consistently, especially for remote/hybrid sessions. I built Bits & Bots to fix both: a structured way to publish robotics, electronics, and programming content, and a way for monitors to actually see how each child (6–16 years old) is progressing through it.
 
 ## Architecture decisions
 
