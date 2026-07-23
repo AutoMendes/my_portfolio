@@ -18,7 +18,7 @@ As partes menos glamorosas de entregar software — rever pull requests a sério
 
 ## Arquitetura
 
-O sistema está organizado em cinco fases sequenciais que cobrem todo o ciclo de vida de IaC — Desenho (gerar Terraform/Helm a partir de uma prompt), Revisão (sete agentes + análise do diff de IaC), Validação (decisão do orquestrador + validação profunda de IaC), Deploy (estimativa de custos, depois rollout faseado), e Operação (auto-healing + deteção de drift) — modelada abaixo em notação C4. As secções seguintes detalham cada módulo.
+O sistema está organizado em cinco fases sequenciais que cobrem todo o ciclo de vida de IaC — Desenho (gerar Terraform/Helm a partir de uma prompt), Revisão (sete agentes + análise do diff de IaC), Validação (decisão do orquestrador + validação profunda de IaC), Deploy (estimativa de custos, depois rollout faseado), e Operação (auto-healing + deteção de drift) — modelada abaixo em notação C4. Três partes destacam-se e merecem detalhe: **revisão de PRs**, **segurança e custo de IaC**, e **auto-healing de Kubernetes** — as de maior valor e maior desafio técnico. Uma camada MCP partilhada e uma app desktop expõem essas mesmas capacidades de forma interativa; ambas cobertas mais abaixo, de forma breve.
 
 <img src="/images/aiops/arquitetura_sistema_c4.png" alt="Arquitetura modular de agentes de IA a gerir o ciclo de vida de IaC, desde uma prompt até revisão, validação, deploy e operação" class="diagram-large" />
 
@@ -38,64 +38,33 @@ Um programador abre um PR; sete agentes analisam o diff em paralelo e publicam c
 
 Acionado por alterações a ficheiros Terraform, o `iac_generator` valida a configuração de infraestrutura e estima custos via o CLI do Infracost, publicando um relatório no PR. O veredicto (`VERDICT: APPROVED` ou `VERDICT: BLOCKED`) decide se a pipeline avança para `terraform apply` ou abre uma issue de bloqueio no GitHub.
 
-<img src="/images/aiops/uc2_iac_review.png" alt="Diagrama: alterações Terraform acionam validação de IaC e estimativa de custos, condicionando o terraform apply ao veredicto" class="diagram-large" />
-
 **`iac_generator`, um módulo, cinco modos.** O mesmo agente trata de `generate` (templates Terraform/Helm a partir de uma prompt em linguagem natural), `validate`, `fix`, `ci` (validação de PR/push com veredicto de bloqueio), e `cost` (estimativa via Infracost) — uma única base de código atrás dos cinco, em vez de uma ferramenta separada por preocupação que divergiria ao longo do tempo. No modo `validate` lê o conjunto *completo* de ficheiros Terraform em conjunto em vez de um de cada vez, o que evita falsos positivos por falta de contexto que só existe noutro ficheiro do projeto (uma versão de provider fixada noutro sítio, por exemplo). Os problemas só são reportados com evidência concreta no código, divididos entre críticos (credenciais hardcoded, backend local, recursos sem bloco lifecycle), avisos e sugestões — resolvendo sempre num `VERDICT: BLOCKED` ou `VERDICT: APPROVED` estruturado sobre o qual uma pipeline pode agir diretamente.
 
-<div class="image-pair">
-<img src="/images/aiops/iac_findings_pass_fail.png" alt="A validação Terraform do agente de IaC, uma descoberta por linha: severidade (PASS/FAIL), ficheiro, linha citada, e uma correção quando aplicável" />
-<img src="/images/aiops/iac_evidence_checked.png" alt="Evidence Checked: cada prova que o agente verificou antes de chegar ao veredicto, mais Improvement Opportunities e o VERDICT: APPROVED final" />
-</div>
+![A validação Terraform do agente de IaC, uma descoberta por linha: severidade (PASS/FAIL), ficheiro, linha citada, e uma correção quando aplicável](/images/aiops/iac_findings_pass_fail.png)
 
 **Agnóstico a cloud por design, incluindo on-premises.** Para além de Azure, AWS e GCP, `generate`/`validate`/`fix` vêm com prompts de sistema dedicados para ambientes locais/on-premises — Terraform com providers locais, namespaces Kubernetes via kubeconfig — porque infraestrutura sem acesso a cloud continua a ser infraestrutura que precisa de validação. A estimativa de custos nesse modo dispensa completamente o Infracost (não tem preços on-prem para mapear) e pede diretamente ao LLM para estimar os recursos necessários.
 
 **Deteção de drift como uma verificação recorrente própria, não uma aplicação única.** A infraestrutura não é assumida como continuando exatamente como o Terraform a deixou — um `terraform plan -detailed-exitcode` agendado contra o estado real da cloud reporta um de três resultados (sem drift, erro, drift detetado) através da própria convenção de exit code do Terraform, para alterações manuais feitas fora da pipeline serem expostas em vez de divergirem silenciosamente do que está declarado em código.
 
-<div class="image-pair">
-<img src="/images/aiops/infracost_breakdown.png" alt="Cost Analysis (Infracost): custo mensal por recurso para main-production e main-staging, com subtotais e um resumo de total mensal/anual" />
-<img src="/images/aiops/infracost_savings.png" alt="High-Cost Resources e Savings Opportunities: o LLM assinala os maiores fatores de custo e sugere formas concretas de os reduzir" />
-</div>
+![Cost Analysis (Infracost): custo mensal por recurso para main-production e main-staging, com subtotais e um resumo de total mensal/anual](/images/aiops/infracost_breakdown.png)
 
 ### Kubernetes (auto-healing)
-
-**Triagem antes de agir, nunca uma mutação direta do cluster.** Os estados de falha de pods estão divididos entre os que são seguros de auto-remediar (`CrashLoopBackOff`, `Error`, `OOMKilled`, `Failed`) e os que são só-relatório (`ImagePullBackOff`, `Pending`), porque reiniciar cegamente estes últimos não corrigiria — e poderia mascarar — o problema real. Além disso, uma heurística (pod com menos de 10 minutos de idade *e* 2+ reinícios) assinala um provável mau deploy; quando dispara, a correção não é um `kubectl rollback` direto — é um commit git a reverter o ficheiro de values do Helm relevante no branch que a Application do ArgoCD desse namespace segue, para o cluster ser corrigido através do mesmo caminho GitOps que qualquer outro deploy usa, sem divergência entre o que o auto-healing fez e o que a pipeline de deploy acredita estar em produção.
 
 O Azure Monitor / Logic Apps deteta um pod Kubernetes a falhar e aciona o agente de auto-healing. O agente diagnostica a causa raiz e, consoante o tipo de falha, aplica uma correção automática (para estados reiniciáveis) ou reporta o incidente para intervenção manual — gerindo o ciclo de vida da issue no GitHub em ambos os casos: criada quando detetada, fechada automaticamente quando a recuperação é confirmada.
 
 <img src="/images/aiops/uc3_auto_healing.png" alt="Diagrama: Azure Monitor deteta um pod a falhar, agente de auto-healing diagnostica e corrige ou reporta, issue no GitHub aberta e fechada automaticamente" class="diagram-large" />
 
-### Camada MCP
+**Triagem antes de agir, nunca uma mutação direta do cluster.** Os estados de falha de pods estão divididos entre os que são seguros de auto-remediar (`CrashLoopBackOff`, `Error`, `OOMKilled`, `Failed`) e os que são só-relatório (`ImagePullBackOff`, `Pending`), porque reiniciar cegamente estes últimos não corrigiria — e poderia mascarar — o problema real. Além disso, uma heurística (pod com menos de 10 minutos de idade *e* 2+ reinícios) assinala um provável mau deploy; quando dispara, a correção não é um `kubectl rollback` direto — é um commit git a reverter o ficheiro de values do Helm relevante no branch que a Application do ArgoCD desse namespace segue, para o cluster ser corrigido através do mesmo caminho GitOps que qualquer outro deploy usa, sem divergência entre o que o auto-healing fez e o que a pipeline de deploy acredita estar em produção.
 
-**Uma única camada de interface, usada tanto pela pipeline como por um humano.** Cinco servidores MCP próprios (GitHub, Kubernetes, IaC, Infracost, Log Analytics) expõem os mesmos primitivos — `list_pods`, `get_pod_logs`, `get_pod_events`, validação de Terraform, estimativa de custos — como ferramentas. O agente de auto-healing em CI e o servidor MCP de Kubernetes chamam exatamente o mesmo tipo de funções wrapper de `kubectl` por baixo; a diferença é só *quem está a conduzir*. Ligar os servidores ao Claude Desktop com os prompts fornecidos (`iac_validate`, `iac_generate`, `iac_costs`, `auto_healing`, …) dá a uma pessoa, de forma interativa, as mesmas ferramentas de diagnóstico e remediação que a pipeline usa de forma autónoma — uma camada de integração, dois consumidores.
+### Também faz parte do sistema
 
-Uma interação conversacional entre um programador e o sistema através da camada MCP, usando o Claude Desktop ou o Claude Code CLI — gerar, validar e estimar o custo de IaC, detetar drift, operar o cluster Kubernetes (auto-healing, listar pods, ler logs), e gerir PRs/issues no GitHub. Um veredicto de bloqueio ou drift detetado abre automaticamente uma issue no GitHub com os detalhes.
+**Camada MCP.** As mesmas ferramentas de Kubernetes/GitHub/IaC/Infracost/Log Analytics que a pipeline usa de forma autónoma são também expostas como cinco servidores MCP, utilizáveis de forma interativa a partir do Claude Desktop ou do Claude Code CLI com os mesmos prompts (`iac_validate`, `auto_healing`, …) — uma camada de integração, dois consumidores, em vez de construir as mesmas integrações duas vezes.
 
-![Diagrama: programador interage com ferramentas de IaC, Kubernetes e GitHub de forma conversacional através da camada MCP via Claude Desktop ou CLI](/images/aiops/uc4_mcp.png)
+**App desktop.** Uma GUI em PyQt6 (empacotada de forma standalone com PyInstaller) expõe o mesmo agente de IaC a quem prefere não tocar num terminal — agnóstica a provider (Azure OpenAI, Anthropic, Gemini, ou qualquer endpoint compatível com OpenAI via perfis de ligação nomeados) — e é o único sítio onde o fluxo on-premises ganha uma interface a sério: **perfis de máquina** deixam uma estimativa local de custo/viabilidade comparar a infraestrutura declarada contra a capacidade real de CPU/RAM/disco/GPU de uma máquina alvo específica, em vez de adivinhar.
 
-Ao nível de componentes, isto é um cliente LLM (Claude Desktop ou o Claude Code CLI) a consumir interfaces expostas pelos servidores MCP através do protocolo MCP/stdio, com cada servidor a encapsular um sistema externo — Kubernetes via chamadas subprocess ao `kubectl`, GitHub e Infracost via HTTPS, Terraform via subprocess do CLI e ferramentas de análise estática (`tfsec`, `checkov`).
+![O separador Machines da app desktop: criação e gestão de perfis de máquina persistentes (SO, CPU, RAM, disco, GPU, largura de banda) usados nas estimativas de viabilidade on-premises](/images/aiops/desktop_app_machines.png)
 
-<img src="/images/aiops/mcp_componentes.png" alt="Diagrama UML de componentes da camada MCP: um cliente LLM a consumir servidores MCP via stdio, cada servidor a encapsular um sistema externo via HTTPS ou subprocess" class="diagram-large" />
-
-### Aplicação desktop
-
-Para um utilizador DevOps sem familiaridade com a linha de comandos ou pipelines de CI/CD: validar configurações de IaC, gerar templates, estimar custos (modo cloud ou local) e detetar drift, escolhendo o provider de LLM e — em modo local — um perfil de máquina pré-configurado. Ficheiros de IaC inalterados entre execuções são servidos a partir de uma cache em memória em vez de chamarem a API outra vez.
-
-![Diagrama: um utilizador DevOps valida, gera e estima custos de IaC através da GUI da aplicação desktop](/images/aiops/uc5_desktop_app.png)
-
-**Uma terceira interface, para quem não quer um terminal — e agnóstica a provider por design.** Uma GUI em PyQt6 (empacotada de forma standalone com PyInstaller) envolve o agente de IaC numa janela de dois painéis — um painel de configuração para perfis de ligação e definições, um painel de output em streaming alimentado por uma thread de trabalho em segundo plano através de um temporizador de flush a cada 80ms, para a UI se manter responsiva enquanto o LLM transmite uma resposta em vez de bloquear à espera dela. Ao contrário do routing fixo Groq-primário/Azure-fallback da pipeline de CI, a app desktop deixa um utilizador guardar múltiplos perfis de ligação nomeados contra Azure OpenAI, Anthropic, Google Gemini, ou qualquer endpoint genérico compatível com OpenAI — para trocar de, digamos, Azure para Claude para um modelo alojado localmente ser um dropdown, não uma alteração de código. O `engine.py` guarda toda a lógica de IaC sem qualquer dependência do módulo do agente de CI, carregando os mesmos prompts de sistema partilhados em Markdown que os agentes da pipeline usam, para os dois nunca divergirem em comportamento; o `workers.py` corre as operações do engine numa `QThread`, a canalizar stdout/stderr para uma fila que alimenta a UI em tempo real.
-
-<img src="/images/aiops/desktop_app_pacotes.png" alt="Diagrama de pacotes da aplicação desktop: módulos PyQt6 (engine, workers, window, dialogs, config) e as suas dependências de prompts partilhados e sistemas externos" class="diagram-large" />
-
-**Validação on-premises, com a capacidade real da máquina alvo como contexto.** Selecionar "Local" em vez de um provider cloud muda a app para os mesmos prompts on-prem descritos acima, para ambientes sem conta cloud contra a qual validar. Para tornar a estimativa de custo/viabilidade nesse modo realmente útil em vez de um palpite às escuras, a app introduz **perfis de máquina** — registos persistentes do SO, núcleos de CPU, RAM, disco, GPU e largura de banda de rede de uma máquina alvo, geridos no separador Machines da janela de definições. Escolher um perfil ao correr uma estimativa local passa-o ao LLM como contexto, permitindo-lhe comparar o que a infraestrutura declarada realmente precisa contra o que essa máquina específica consegue fornecer — um edge server e um portátil de desenvolvimento são avaliados contra os seus próprios limites reais, não uma suposição genérica.
-
-<div class="image-pair">
-<img src="/images/aiops/desktop_app_machines.png" alt="O separador Machines da app desktop: criação e gestão de perfis de máquina persistentes (SO, CPU, RAM, disco, GPU, largura de banda) usados nas estimativas de viabilidade on-premises" />
-<img src="/images/aiops/desktop_app_cost_local_en.png" alt="Estimativa de recursos no modo local/on-premises da app desktop, a comparar os recursos necessários com o perfil de máquina selecionado" />
-</div>
-
-### Fiabilidade: routing de LLM
-
-**Uma cadeia de provider primário/fallback, não uma API fixa.** O Groq é o provider primário, com o Azure OpenAI configurado como fallback automático (`LLM_PRIMARY_PROVIDER`/`LLM_FALLBACK_PROVIDER`), para uma falha num único provider não derrubar de uma vez a revisão de PRs, a validação de IaC, ou o auto-healing — uma decisão de fiabilidade real, não hipotética, para algo pensado para correr sem supervisão em CI.
+**Fiabilidade.** As chamadas ao LLM passam por uma cadeia de provider primário/fallback (Groq primário, Azure OpenAI fallback via `LLM_PRIMARY_PROVIDER`/`LLM_FALLBACK_PROVIDER`) em vez de uma API fixa, para uma falha num único provider não derrubar de uma vez a revisão de PRs, a validação de IaC, ou o auto-healing.
 
 ## A parte mais difícil
 
