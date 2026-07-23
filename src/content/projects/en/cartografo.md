@@ -7,6 +7,6 @@ description: >-
   Greedy, A*), license-plate OCR (EasyOCR) for user authentication, and a local LLM
   (Ollama/Mistral) describing tourist attractions along the best route — across 18 Portuguese
   cities, with interactive maps via Folium and OSRM routing, in a Streamlit interface.
-tags: ["Python", "Streamlit", "Search Algorithms", "OCR (EasyOCR)", "Ollama/Mistral", "Folium/OSRM"]
+tags: ["Python", "Search Algorithms", "OCR (EasyOCR)", "LLMs", "Folium/OSRM"]
 featured: true
 ---
