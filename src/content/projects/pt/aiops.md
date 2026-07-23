@@ -86,11 +86,6 @@ Para um utilizador DevOps sem familiaridade com a linha de comandos ou pipelines
 
 <img src="/images/aiops/desktop_app_pacotes.png" alt="Diagrama de pacotes da aplicação desktop: módulos PyQt6 (engine, workers, window, dialogs, config) e as suas dependências de prompts partilhados e sistemas externos" class="diagram-large" />
 
-<div class="image-pair">
-<img src="/images/aiops/desktop_app_main.png" alt="A aplicação desktop em PyQt6: painel de configuração à esquerda, output em streaming à direita" />
-<img src="/images/aiops/desktop_app_validate_en.png" alt="Resultado de uma validação de IaC em modo cloud na app desktop, com diagnóstico estruturado e veredicto no painel de output" />
-</div>
-
 **Validação on-premises, com a capacidade real da máquina alvo como contexto.** Selecionar "Local" em vez de um provider cloud muda a app para os mesmos prompts on-prem descritos acima, para ambientes sem conta cloud contra a qual validar. Para tornar a estimativa de custo/viabilidade nesse modo realmente útil em vez de um palpite às escuras, a app introduz **perfis de máquina** — registos persistentes do SO, núcleos de CPU, RAM, disco, GPU e largura de banda de rede de uma máquina alvo, geridos no separador Machines da janela de definições. Escolher um perfil ao correr uma estimativa local passa-o ao LLM como contexto, permitindo-lhe comparar o que a infraestrutura declarada realmente precisa contra o que essa máquina específica consegue fornecer — um edge server e um portátil de desenvolvimento são avaliados contra os seus próprios limites reais, não uma suposição genérica.
 
 <div class="image-pair">

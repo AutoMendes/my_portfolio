@@ -86,11 +86,6 @@ For a DevOps user without CLI or CI/CD pipeline familiarity: validate IaC config
 
 <img src="/images/aiops/desktop_app_pacotes.png" alt="Package diagram of the desktop app: PyQt6 modules (engine, workers, window, dialogs, config) and their dependencies on shared prompts and external systems" class="diagram-large" />
 
-<div class="image-pair">
-<img src="/images/aiops/desktop_app_main.png" alt="The PyQt6 desktop app: config panel on the left, streaming output on the right" />
-<img src="/images/aiops/desktop_app_validate_en.png" alt="Result of a cloud IaC validation run in the desktop app, with structured diagnosis and verdict in the output panel" />
-</div>
-
 **On-premises validation, with the target machine's real capacity as context.** Selecting "Local" instead of a cloud provider switches the app to the same on-prem-specific prompts described above, for environments with no cloud account to validate against. To make cost/feasibility estimation there actually useful instead of a guess in the dark, the app introduces **machine profiles** — persistent records of a target machine's OS, CPU cores, RAM, disk, GPU, and network bandwidth, managed in the Settings window's Machines tab. Pick a profile when running a local estimate and it's passed to the LLM as context, letting it compare what the declared infrastructure actually needs against what that specific machine can provide — an edge server and a dev laptop get evaluated against their own real limits, not a generic assumption.
 
 <div class="image-pair">
