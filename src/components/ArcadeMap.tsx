@@ -48,6 +48,10 @@ export function ArcadeMap({ projects, onClose }: ArcadeMapProps) {
   const currentBuildingIndex = buildingAt(position);
   const currentProject = currentBuildingIndex >= 0 ? (projects[currentBuildingIndex] ?? null) : null;
 
+  function move(dx: number, dy: number) {
+    setPosition((prev) => tryMove(prev, dx, dy));
+  }
+
   useEffect(() => {
     function handleKeydown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
@@ -57,7 +61,7 @@ export function ArcadeMap({ projects, onClose }: ArcadeMapProps) {
       const delta = KEY_DELTAS[event.key];
       if (delta) {
         event.preventDefault();
-        setPosition((prev) => tryMove(prev, delta[0], delta[1]));
+        move(delta[0], delta[1]);
       }
     }
 
@@ -71,8 +75,10 @@ export function ArcadeMap({ projects, onClose }: ArcadeMapProps) {
     y: Math.floor(i / MAP_WIDTH),
   }));
 
+  const dpadButtonClass = 'flex h-11 w-11 items-center justify-center rounded bg-white/10 text-xl text-white active:bg-white/25';
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-black/90 p-6">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-black/90 p-4">
       <button type="button" onClick={onClose} className="absolute right-6 top-6 text-2xl text-white">
         ✕
       </button>
@@ -131,7 +137,24 @@ export function ArcadeMap({ projects, onClose }: ArcadeMapProps) {
         </div>
       )}
 
-      <p className="text-sm text-white/70">Arrow keys / WASD to walk · Esc to close</p>
+      <div className="grid grid-cols-3 grid-rows-2 gap-1" aria-label="Movement controls">
+        <div />
+        <button type="button" onClick={() => move(0, -1)} className={dpadButtonClass} aria-label="Up">
+          ↑
+        </button>
+        <div />
+        <button type="button" onClick={() => move(-1, 0)} className={dpadButtonClass} aria-label="Left">
+          ←
+        </button>
+        <button type="button" onClick={() => move(0, 1)} className={dpadButtonClass} aria-label="Down">
+          ↓
+        </button>
+        <button type="button" onClick={() => move(1, 0)} className={dpadButtonClass} aria-label="Right">
+          →
+        </button>
+      </div>
+
+      <p className="text-sm text-white/70">Arrow keys / WASD, or the buttons above · Esc to close</p>
     </div>
   );
 }
