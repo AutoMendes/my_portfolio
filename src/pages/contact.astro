@@ -1,6 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ContactLink from '../components/ContactLink.astro';
+
+const status = Astro.url.searchParams.get('sent') ? 'sent' : Astro.url.searchParams.get('error') ? 'error' : null;
 ---
 
 <BaseLayout title="Contact — Tiago Lobo">
@@ -13,58 +15,72 @@ import ContactLink from '../components/ContactLink.astro';
 			<ContactLink href="https://github.com/AutoMendes" icon="github" external>GitHub</ContactLink>
 		</div>
 
-		<form action="https://formspree.io/f/mqeryaqb" method="POST" class="max-w-md space-y-4">
-			<div>
-				<label for="name" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Name</label>
-				<input
-					type="text"
-					id="name"
-					name="name"
-					required
-					class="mt-1 w-full rounded border px-3 py-2"
-					style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
-				/>
-			</div>
-			<div>
-				<label for="email" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Email</label>
-				<input
-					type="email"
-					id="email"
-					name="email"
-					required
-					class="mt-1 w-full rounded border px-3 py-2"
-					style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
-				/>
-			</div>
-			<div>
-				<label for="subject" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Subject</label>
-				<input
-					type="text"
-					id="subject"
-					name="_subject"
-					required
-					class="mt-1 w-full rounded border px-3 py-2"
-					style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
-				/>
-			</div>
-			<div>
-				<label for="message" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Message</label>
-				<textarea
-					id="message"
-					name="message"
-					rows="5"
-					required
-					class="mt-1 w-full rounded border px-3 py-2"
-					style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
-				></textarea>
-			</div>
-			<button
-				type="submit"
-				class="rounded px-4 py-2 font-medium"
-				style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
-			>
-				Send message
-			</button>
-		</form>
+		<div class="max-w-md">
+			{status === 'sent' && (
+				<p class="mb-4 rounded border px-4 py-2 text-sm" style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
+					Message sent — thanks! I'll get back to you soon.
+				</p>
+			)}
+			{status === 'error' && (
+				<p class="mb-4 rounded border px-4 py-2 text-sm" style={{ borderColor: '#e07a5f', color: '#e07a5f' }}>
+					Something went wrong sending your message — please try again, or email me directly.
+				</p>
+			)}
+
+			<form action="/api/contact" method="POST" class="space-y-4">
+				<input type="hidden" name="redirect" value="/contact" />
+				<div>
+					<label for="name" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Name</label>
+					<input
+						type="text"
+						id="name"
+						name="name"
+						required
+						class="mt-1 w-full rounded border px-3 py-2"
+						style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
+					/>
+				</div>
+				<div>
+					<label for="email" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Email</label>
+					<input
+						type="email"
+						id="email"
+						name="email"
+						required
+						class="mt-1 w-full rounded border px-3 py-2"
+						style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
+					/>
+				</div>
+				<div>
+					<label for="subject" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Subject</label>
+					<input
+						type="text"
+						id="subject"
+						name="_subject"
+						required
+						class="mt-1 w-full rounded border px-3 py-2"
+						style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
+					/>
+				</div>
+				<div>
+					<label for="message" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Message</label>
+					<textarea
+						id="message"
+						name="message"
+						rows="5"
+						required
+						class="mt-1 w-full rounded border px-3 py-2"
+						style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
+					></textarea>
+				</div>
+				<button
+					type="submit"
+					class="rounded px-4 py-2 font-medium"
+					style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
+				>
+					Send message
+				</button>
+			</form>
+		</div>
 	</div>
 </BaseLayout>
