@@ -11,3 +11,10 @@ export function useTranslations(locale: Locale) {
     return ui[locale][key] ?? ui[defaultLang][key];
   };
 }
+
+export function getLocalizedPath(pathname: string, targetLocale: Locale): string {
+  const withoutPtPrefix = pathname === '/pt' || pathname.startsWith('/pt/') ? pathname.slice(3) || '/' : pathname;
+
+  if (targetLocale === 'en') return withoutPtPrefix;
+  return withoutPtPrefix === '/' ? '/pt/' : `/pt${withoutPtPrefix}`;
+}

@@ -12,7 +12,13 @@ export function ArcadeModeController({ projects }: ArcadeModeControllerProps) {
   return (
     <>
       <KonamiListener onComplete={() => setOpen(true)} />
-      <button type="button" onClick={() => setOpen(true)} title="Arcade mode" className="text-lg">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        title="Arcade mode"
+        className="rounded-full border px-2.5 py-1 text-lg transition hover:scale-110"
+        style={{ borderColor: 'var(--border-default)', background: 'var(--bg-chrome)' }}
+      >
         🕹️
       </button>
       {open && <ArcadeMap projects={projects} onClose={() => setOpen(false)} />}

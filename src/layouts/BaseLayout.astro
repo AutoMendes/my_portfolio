@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import { getLangFromUrl, useTranslations } from '../i18n/utils';
 import { ThemeToggle } from '../components/ThemeToggle';
+import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 import { ArcadeModeController } from '../components/ArcadeModeController';
 import { THEME_STORAGE_KEY } from '../lib/theme';
 import { getAllProjects } from '../lib/projects';
@@ -56,7 +57,10 @@ const arcadeProjects = allProjects.map((project) => ({
 					<li><a href={`${prefix}/about`}>{t('nav.about')}</a></li>
 					<li><a href={`${prefix}/contact`}>{t('nav.contact')}</a></li>
 				</ul>
-				<ThemeToggle client:load />
+				<div class="flex items-center gap-4">
+					<LanguageSwitcher locale={lang} pathname={Astro.url.pathname} />
+					<ThemeToggle client:load />
+				</div>
 			</nav>
 		</header>
 

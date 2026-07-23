@@ -1,0 +1,31 @@
+---
+import { getLocalizedPath } from '../i18n/utils';
+import type { Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  pathname: string;
+}
+
+const { locale, pathname } = Astro.props;
+const enPath = getLocalizedPath(pathname, 'en');
+const ptPath = getLocalizedPath(pathname, 'pt');
+---
+
+<div class="flex items-center gap-1 text-sm">
+	<a
+		href={enPath}
+		aria-current={locale === 'en' ? 'page' : undefined}
+		style={{ color: locale === 'en' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: locale === 'en' ? '600' : '400' }}
+	>
+		EN
+	</a>
+	<span style={{ color: 'var(--text-muted)' }}>/</span>
+	<a
+		href={ptPath}
+		aria-current={locale === 'pt' ? 'page' : undefined}
+		style={{ color: locale === 'pt' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: locale === 'pt' ? '600' : '400' }}
+	>
+		PT
+	</a>
+</div>
