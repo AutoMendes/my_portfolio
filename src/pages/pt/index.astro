@@ -1,7 +1,42 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import { getFeaturedProjects } from '../../lib/projects';
+
+const featured = await getFeaturedProjects('pt');
+const slug = (id: string) => id.split('/').slice(1).join('/');
 ---
 
-<BaseLayout title="Tiago Lobo — Portefólio">
-	<h1 class="text-3xl font-bold">Início</h1>
+<BaseLayout title="Tiago Lobo — Software Engineer">
+	<section>
+		<h1 class="text-4xl font-bold" style={{ color: 'var(--text-heading)' }}>Tiago Lobo</h1>
+		<p class="mt-2 text-lg" style={{ color: 'var(--text-secondary)' }}>
+			Software Engineer especializado em DevOps e automação com IA — experiência full-stack e
+			multiplataforma entre mobile, web e cloud.
+		</p>
+		<div class="mt-6 flex gap-4">
+			<a href="/pt/projects" class="rounded px-4 py-2 font-medium" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
+				Ver todos os projetos
+			</a>
+			<a href="/pt/contact" class="rounded border px-4 py-2 font-medium" style={{ borderColor: 'var(--border-default)', color: 'var(--text-body)' }}>
+				Contactar
+			</a>
+		</div>
+	</section>
+
+	<section class="mt-12">
+		<h2 class="text-2xl font-semibold" style={{ color: 'var(--text-heading)' }}>Projetos em destaque</h2>
+		<div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+			{featured.map((project) => (
+				<ProjectCard
+					href={`/pt/projects/${slug(project.id)}`}
+					title={project.data.title}
+					org={project.data.org}
+					dateRange={project.data.dateRange}
+					description={project.data.description}
+					tags={project.data.tags}
+				/>
+			))}
+		</div>
+	</section>
 </BaseLayout>
