@@ -24,17 +24,21 @@ O sistema está organizado em cinco fases sequenciais que cobrem todo o ciclo de
 
 ### Revisão de PRs
 
+Um programador abre um PR; sete agentes analisam o diff em paralelo e publicam comentários estruturados. O orquestrador lê-os e decide: sem problemas críticos → aprova e faz auto-merge (squash); caso contrário → bloqueia e publica sugestões de correção clicáveis que o programador pode aceitar e re-submeter.
+
+<img src="/images/aiops/uc1_pr_review.png" alt="Diagrama: programador abre um PR, sete agentes revêem em paralelo, orquestrador aprova e faz auto-merge ou bloqueia com sugestões" class="diagram-large" />
+
 **Sete agentes revisores estreitos, um orquestrador que só fala depois de todos falarem.** Cada PR contra `dev`/`main` é revisto em paralelo por agentes especializados — qualidade de código, segurança, testes, performance, documentação, Docker, e configuração de pipeline/CI — cada um a publicar o seu próprio comentário com um marcador de severidade (🔴 CRITICAL, 🟡 WARNING, 💡 SUGGESTION). Nenhum fala com o outro nem precisa de concordar; um orquestrador separado corre só depois de todos terminarem e toma a única decisão que importa: qualquer CRITICAL bloqueia o merge, mais nada bloqueia. Separar "notar problemas" de "decidir o que fazer com eles" manteve cada agente individual simples e deixou a política de bloqueio a viver num único sítio.
 
 **Correções como sugestões clicáveis do GitHub, não só comentários.** Quando o orquestrador bloqueia um PR, não fica pelo relatório — gera correções concretas via LLM e publica-as como blocos de sugestão nativos do GitHub no separador Files Changed, para um developer poder clicar em "Commit all suggestions" e aplicá-las de uma vez, em vez de implementar manualmente o que um agente de IA já escreveu.
 
 ![Um PR bloqueado com sugestões de correção geradas por LLM, mostradas como blocos de sugestão clicáveis do GitHub](/images/aiops/pr_sugestoes_clicaveis_en.png)
 
-Um programador abre um PR; sete agentes analisam o diff em paralelo e publicam comentários estruturados. O orquestrador lê-os e decide: sem problemas críticos → aprova e faz auto-merge (squash); caso contrário → bloqueia e publica sugestões de correção clicáveis que o programador pode aceitar e re-submeter.
-
-<img src="/images/aiops/uc1_pr_review.png" alt="Diagrama: programador abre um PR, sete agentes revêem em paralelo, orquestrador aprova e faz auto-merge ou bloqueia com sugestões" class="diagram-large" />
-
 ### Infraestrutura como Código (IaC)
+
+Acionado por alterações a ficheiros Terraform, o `iac_generator` valida a configuração de infraestrutura e estima custos via o CLI do Infracost, publicando um relatório no PR. O veredicto (`VERDICT: APPROVED` ou `VERDICT: BLOCKED`) decide se a pipeline avança para `terraform apply` ou abre uma issue de bloqueio no GitHub.
+
+<img src="/images/aiops/uc2_iac_review.png" alt="Diagrama: alterações Terraform acionam validação de IaC e estimativa de custos, condicionando o terraform apply ao veredicto" class="diagram-large" />
 
 **`iac_generator`, um módulo, cinco modos.** O mesmo agente trata de `generate` (templates Terraform/Helm a partir de uma prompt em linguagem natural), `validate`, `fix`, `ci` (validação de PR/push com veredicto de bloqueio), e `cost` (estimativa via Infracost) — uma única base de código atrás dos cinco, em vez de uma ferramenta separada por preocupação que divergiria ao longo do tempo. No modo `validate` lê o conjunto *completo* de ficheiros Terraform em conjunto em vez de um de cada vez, o que evita falsos positivos por falta de contexto que só existe noutro ficheiro do projeto (uma versão de provider fixada noutro sítio, por exemplo). Os problemas só são reportados com evidência concreta no código, divididos entre críticos (credenciais hardcoded, backend local, recursos sem bloco lifecycle), avisos e sugestões — resolvendo sempre num `VERDICT: BLOCKED` ou `VERDICT: APPROVED` estruturado sobre o qual uma pipeline pode agir diretamente.
 
@@ -47,14 +51,10 @@ Um programador abre um PR; sete agentes analisam o diff em paralelo e publicam c
 
 **Deteção de drift como uma verificação recorrente própria, não uma aplicação única.** A infraestrutura não é assumida como continuando exatamente como o Terraform a deixou — um `terraform plan -detailed-exitcode` agendado contra o estado real da cloud reporta um de três resultados (sem drift, erro, drift detetado) através da própria convenção de exit code do Terraform, para alterações manuais feitas fora da pipeline serem expostas em vez de divergirem silenciosamente do que está declarado em código.
 
-Acionado por alterações a ficheiros Terraform, o `iac_generator` valida a configuração de infraestrutura e estima custos via o CLI do Infracost, publicando um relatório no PR. O veredicto (`VERDICT: APPROVED` ou `VERDICT: BLOCKED`) decide se a pipeline avança para `terraform apply` ou abre uma issue de bloqueio no GitHub.
-
 <div class="image-pair">
 <img src="/images/aiops/infracost_breakdown.png" alt="Cost Analysis (Infracost): custo mensal por recurso para main-production e main-staging, com subtotais e um resumo de total mensal/anual" />
 <img src="/images/aiops/infracost_savings.png" alt="High-Cost Resources e Savings Opportunities: o LLM assinala os maiores fatores de custo e sugere formas concretas de os reduzir" />
 </div>
-
-<img src="/images/aiops/uc2_iac_review.png" alt="Diagrama: alterações Terraform acionam validação de IaC e estimativa de custos, condicionando o terraform apply ao veredicto" class="diagram-large" />
 
 ### Kubernetes (auto-healing)
 
@@ -78,6 +78,10 @@ Ao nível de componentes, isto é um cliente LLM (Claude Desktop ou o Claude Cod
 
 ### Aplicação desktop
 
+Para um utilizador DevOps sem familiaridade com a linha de comandos ou pipelines de CI/CD: validar configurações de IaC, gerar templates, estimar custos (modo cloud ou local) e detetar drift, escolhendo o provider de LLM e — em modo local — um perfil de máquina pré-configurado. Ficheiros de IaC inalterados entre execuções são servidos a partir de uma cache em memória em vez de chamarem a API outra vez.
+
+![Diagrama: um utilizador DevOps valida, gera e estima custos de IaC através da GUI da aplicação desktop](/images/aiops/uc5_desktop_app.png)
+
 **Uma terceira interface, para quem não quer um terminal — e agnóstica a provider por design.** Uma GUI em PyQt6 (empacotada de forma standalone com PyInstaller) envolve o agente de IaC numa janela de dois painéis — um painel de configuração para perfis de ligação e definições, um painel de output em streaming alimentado por uma thread de trabalho em segundo plano através de um temporizador de flush a cada 80ms, para a UI se manter responsiva enquanto o LLM transmite uma resposta em vez de bloquear à espera dela. Ao contrário do routing fixo Groq-primário/Azure-fallback da pipeline de CI, a app desktop deixa um utilizador guardar múltiplos perfis de ligação nomeados contra Azure OpenAI, Anthropic, Google Gemini, ou qualquer endpoint genérico compatível com OpenAI — para trocar de, digamos, Azure para Claude para um modelo alojado localmente ser um dropdown, não uma alteração de código. O `engine.py` guarda toda a lógica de IaC sem qualquer dependência do módulo do agente de CI, carregando os mesmos prompts de sistema partilhados em Markdown que os agentes da pipeline usam, para os dois nunca divergirem em comportamento; o `workers.py` corre as operações do engine numa `QThread`, a canalizar stdout/stderr para uma fila que alimenta a UI em tempo real.
 
 <img src="/images/aiops/desktop_app_pacotes.png" alt="Diagrama de pacotes da aplicação desktop: módulos PyQt6 (engine, workers, window, dialogs, config) e as suas dependências de prompts partilhados e sistemas externos" class="diagram-large" />
@@ -93,10 +97,6 @@ Ao nível de componentes, isto é um cliente LLM (Claude Desktop ou o Claude Cod
 <img src="/images/aiops/desktop_app_machines.png" alt="O separador Machines da app desktop: criação e gestão de perfis de máquina persistentes (SO, CPU, RAM, disco, GPU, largura de banda) usados nas estimativas de viabilidade on-premises" />
 <img src="/images/aiops/desktop_app_cost_local_en.png" alt="Estimativa de recursos no modo local/on-premises da app desktop, a comparar os recursos necessários com o perfil de máquina selecionado" />
 </div>
-
-Para um utilizador DevOps sem familiaridade com a linha de comandos ou pipelines de CI/CD: validar configurações de IaC, gerar templates, estimar custos (modo cloud ou local) e detetar drift, escolhendo o provider de LLM e — em modo local — um perfil de máquina pré-configurado. Ficheiros de IaC inalterados entre execuções são servidos a partir de uma cache em memória em vez de chamarem a API outra vez.
-
-![Diagrama: um utilizador DevOps valida, gera e estima custos de IaC através da GUI da aplicação desktop](/images/aiops/uc5_desktop_app.png)
 
 ### Fiabilidade: routing de LLM
 

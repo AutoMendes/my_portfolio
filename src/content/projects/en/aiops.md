@@ -24,17 +24,21 @@ The system is organized as five sequential phases covering the full IaC lifecycl
 
 ### PR Review
 
+A developer opens a PR; seven agents analyze the diff in parallel and post structured comments. The orchestrator reads them and decides: no critical issues → approve and auto-merge (squash); otherwise → block and publish clickable fix suggestions the developer can accept and re-submit.
+
+<img src="/images/aiops/uc1_pr_review.png" alt="Diagram: developer opens a PR, seven agents review in parallel, orchestrator approves and auto-merges or blocks with suggestions" class="diagram-large" />
+
 **Seven narrow reviewer agents, one orchestrator that only speaks after all of them do.** Every PR against `dev`/`main` gets reviewed in parallel by specialized agents — code quality, security, tests, performance, documentation, Docker, and pipeline/CI config — each posting its own comment with a severity marker (🔴 CRITICAL, 🟡 WARNING, 💡 SUGGESTION). None of them talk to each other or need to agree; a separate orchestrator runs only once they're all done and makes the one decision that matters: any CRITICAL blocks the merge, nothing else does. Splitting "notice problems" from "decide what to do about them" kept each individual agent simple and let the blocking policy live in exactly one place.
 
 **Fixes as clickable GitHub suggestions, not just comments.** When the orchestrator blocks a PR, it doesn't stop at a report — it generates concrete fixes via the LLM and publishes them as native GitHub review suggestion blocks in the Files Changed tab, so a developer can click "Commit all suggestions" and apply them in one action instead of manually implementing what an AI agent already wrote out.
 
 ![A blocked PR with LLM-generated fix suggestions shown as clickable GitHub review blocks](/images/aiops/pr_sugestoes_clicaveis_en.png)
 
-A developer opens a PR; seven agents analyze the diff in parallel and post structured comments. The orchestrator reads them and decides: no critical issues → approve and auto-merge (squash); otherwise → block and publish clickable fix suggestions the developer can accept and re-submit.
-
-<img src="/images/aiops/uc1_pr_review.png" alt="Diagram: developer opens a PR, seven agents review in parallel, orchestrator approves and auto-merges or blocks with suggestions" class="diagram-large" />
-
 ### Infrastructure as Code (IaC)
+
+Triggered by changes to Terraform files, `iac_generator` validates the infrastructure configuration and estimates costs via the Infracost CLI, publishing a report on the PR. The verdict (`VERDICT: APPROVED` or `VERDICT: BLOCKED`) decides whether the pipeline proceeds to `terraform apply` or opens a blocking GitHub issue instead.
+
+<img src="/images/aiops/uc2_iac_review.png" alt="Diagram: Terraform changes trigger IaC validation and cost estimation, gating terraform apply on the verdict" class="diagram-large" />
 
 **`iac_generator`, one module, five modes.** The same agent handles `generate` (Terraform/Helm templates from a natural-language prompt), `validate`, `fix`, `ci` (PR/push validation with a blocking verdict), and `cost` (Infracost-based estimation) — one codebase behind all five, rather than a separate tool per concern that would drift apart over time. In `validate` mode it reads the *entire* Terraform file set together rather than one file at a time, which avoids false positives from context that only exists elsewhere in the project (a provider version pinned in a different file, say). Findings are only ever reported with concrete evidence in the code, split into critical (hardcoded credentials, local backend, resources without a lifecycle block), warnings, and suggestions — always resolving to a structured `VERDICT: BLOCKED` or `VERDICT: APPROVED` a pipeline can act on directly.
 
@@ -47,14 +51,10 @@ A developer opens a PR; seven agents analyze the diff in parallel and post struc
 
 **Drift detection as its own recurring check, not a one-time apply.** Infrastructure isn't assumed to stay the way Terraform left it — a scheduled `terraform plan -detailed-exitcode` against the real cloud state reports one of three outcomes (no drift, error, drift detected) via Terraform's own exit code convention, so manual changes made outside the pipeline get surfaced instead of silently diverging from what's declared in code.
 
-Triggered by changes to Terraform files, `iac_generator` validates the infrastructure configuration and estimates costs via the Infracost CLI, publishing a report on the PR. The verdict (`VERDICT: APPROVED` or `VERDICT: BLOCKED`) decides whether the pipeline proceeds to `terraform apply` or opens a blocking GitHub issue instead.
-
 <div class="image-pair">
 <img src="/images/aiops/infracost_breakdown.png" alt="Cost Analysis (Infracost): per-resource monthly cost breakdown for main-production and main-staging, with subtotals and a total month/year summary" />
 <img src="/images/aiops/infracost_savings.png" alt="High-Cost Resources and Savings Opportunities: the LLM flags the biggest cost drivers and suggests concrete ways to reduce them" />
 </div>
-
-<img src="/images/aiops/uc2_iac_review.png" alt="Diagram: Terraform changes trigger IaC validation and cost estimation, gating terraform apply on the verdict" class="diagram-large" />
 
 ### Kubernetes (auto-healing)
 
@@ -78,6 +78,10 @@ At the component level, this is an LLM client (Claude Desktop or the Claude Code
 
 ### Desktop app
 
+For a DevOps user without CLI or CI/CD pipeline familiarity: validate IaC configurations, generate templates, estimate costs (cloud or local mode), and detect drift, choosing the LLM provider and — in local mode — a pre-configured machine profile. Unchanged IaC files between runs are served from an in-memory cache instead of re-hitting the API.
+
+![Diagram: a DevOps user validates, generates, and estimates costs for IaC through the desktop app's GUI](/images/aiops/uc5_desktop_app.png)
+
 **A third interface, for people who don't want a terminal — and provider-agnostic by design.** A PyQt6 GUI (packaged standalone with PyInstaller) wraps the IaC agent behind a two-panel window — a config panel for connection profiles and settings, a streaming output panel fed by a background worker thread through an 80ms-interval flush timer so the UI stays responsive while the LLM streams a response instead of blocking on it. Unlike the CI pipeline's fixed Groq-primary/Azure-fallback routing, the desktop app lets a user save multiple named connection profiles against Azure OpenAI, Anthropic, Google Gemini, or any generic OpenAI-compatible endpoint — so switching from, say, Azure to Claude to a locally-hosted model is a dropdown, not a code change. `engine.py` holds all the IaC logic with zero dependency on the CI agent module, loading the same shared Markdown system prompts the pipeline agents use so the two never drift out of sync in behavior; `workers.py` runs engine operations on a `QThread`, piping stdout/stderr into a queue that feeds the UI in real time.
 
 <img src="/images/aiops/desktop_app_pacotes.png" alt="Package diagram of the desktop app: PyQt6 modules (engine, workers, window, dialogs, config) and their dependencies on shared prompts and external systems" class="diagram-large" />
@@ -93,10 +97,6 @@ At the component level, this is an LLM client (Claude Desktop or the Claude Code
 <img src="/images/aiops/desktop_app_machines.png" alt="The desktop app's Machines tab: creating and managing persistent machine profiles (OS, CPU, RAM, disk, GPU, bandwidth) used for on-premises feasibility estimates" />
 <img src="/images/aiops/desktop_app_cost_local_en.png" alt="Resource estimation in the desktop app's local/on-premises mode, comparing required resources against the selected machine profile" />
 </div>
-
-For a DevOps user without CLI or CI/CD pipeline familiarity: validate IaC configurations, generate templates, estimate costs (cloud or local mode), and detect drift, choosing the LLM provider and — in local mode — a pre-configured machine profile. Unchanged IaC files between runs are served from an in-memory cache instead of re-hitting the API.
-
-![Diagram: a DevOps user validates, generates, and estimates costs for IaC through the desktop app's GUI](/images/aiops/uc5_desktop_app.png)
 
 ### Reliability: LLM routing
 
