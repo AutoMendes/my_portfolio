@@ -31,7 +31,6 @@ const arcadeProjects = allProjects.map((project) => ({
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
@@ -47,6 +46,9 @@ const arcadeProjects = allProjects.map((project) => ({
 				document.documentElement.setAttribute('data-theme', theme);
 			})();
 		</script>
+		{import.meta.env.PUBLIC_UMAMI_WEBSITE_ID && (
+			<script defer src="https://cloud.umami.is/script.js" data-website-id={import.meta.env.PUBLIC_UMAMI_WEBSITE_ID} />
+		)}
 	</head>
 	<body class="flex min-h-screen flex-col">
 		<header class="border-b border-gray-200 dark:border-gray-800">
