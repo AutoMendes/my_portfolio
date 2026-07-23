@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Contact — Tiago Lobo">
+	<h1 class="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>Contact</h1>
+
+	<div class="mt-6 flex max-w-3xl flex-wrap gap-4">
+		<a
+			href="mailto:tiago.lobop@gmail.com"
+			class="rounded border px-4 py-2 text-sm font-medium"
+			style={{ borderColor: 'var(--border-default)', color: 'var(--text-body)' }}
+		>
+			✉️ tiago.lobop@gmail.com
+		</a>
+		<a
+			href="https://linkedin.com/in/tiagolobo10"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="rounded border px-4 py-2 text-sm font-medium"
+			style={{ borderColor: 'var(--border-default)', color: 'var(--text-body)' }}
+		>
+			LinkedIn
+		</a>
+		<a
+			href="https://github.com/AutoMendes"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="rounded border px-4 py-2 text-sm font-medium"
+			style={{ borderColor: 'var(--border-default)', color: 'var(--text-body)' }}
+		>
+			GitHub
+		</a>
+	</div>
+
+	<form
+		action="https://formspree.io/f/mqeryaqb"
+		method="POST"
+		class="mt-10 max-w-md space-y-4"
+	>
+		<div>
+			<label for="name" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Name</label>
+			<input
+				type="text"
+				id="name"
+				name="name"
+				required
+				class="mt-1 w-full rounded border px-3 py-2"
+				style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
+			/>
+		</div>
+		<div>
+			<label for="email" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Email</label>
+			<input
+				type="email"
+				id="email"
+				name="email"
+				required
+				class="mt-1 w-full rounded border px-3 py-2"
+				style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
+			/>
+		</div>
+		<div>
+			<label for="message" class="block text-sm font-medium" style={{ color: 'var(--text-body)' }}>Message</label>
+			<textarea
+				id="message"
+				name="message"
+				rows="5"
+				required
+				class="mt-1 w-full rounded border px-3 py-2"
+				style={{ borderColor: 'var(--border-default)', background: 'var(--bg-page)', color: 'var(--text-body)' }}
+			></textarea>
+		</div>
+		<button
+			type="submit"
+			class="rounded px-4 py-2 font-medium"
+			style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
+		>
+			Send message
+		</button>
+	</form>
+</BaseLayout>
