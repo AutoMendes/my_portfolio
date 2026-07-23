@@ -20,7 +20,7 @@ As partes menos glamorosas de entregar software — rever pull requests a sério
 
 O sistema está organizado em cinco fases sequenciais que cobrem todo o ciclo de vida de IaC — Desenho (gerar Terraform/Helm a partir de uma prompt), Revisão (sete agentes + análise do diff de IaC), Validação (decisão do orquestrador + validação profunda de IaC), Deploy (estimativa de custos, depois rollout faseado), e Operação (auto-healing + deteção de drift) — modelada abaixo em notação C4. As secções seguintes detalham cada módulo.
 
-![Arquitetura modular de agentes de IA a gerir o ciclo de vida de IaC, desde uma prompt até revisão, validação, deploy e operação](/images/aiops/arquitetura_sistema_c4.png)
+<img src="/images/aiops/arquitetura_sistema_c4.png" alt="Arquitetura modular de agentes de IA a gerir o ciclo de vida de IaC, desde uma prompt até revisão, validação, deploy e operação" class="diagram-large" />
 
 ### Revisão de PRs
 
@@ -30,7 +30,7 @@ O sistema está organizado em cinco fases sequenciais que cobrem todo o ciclo de
 
 Um programador abre um PR; sete agentes analisam o diff em paralelo e publicam comentários estruturados. O orquestrador lê-os e decide: sem problemas críticos → aprova e faz auto-merge (squash); caso contrário → bloqueia e publica sugestões de correção clicáveis que o programador pode aceitar e re-submeter.
 
-![Diagrama: programador abre um PR, sete agentes revêem em paralelo, orquestrador aprova e faz auto-merge ou bloqueia com sugestões](/images/aiops/uc1_pr_review.png)
+<img src="/images/aiops/uc1_pr_review.png" alt="Diagrama: programador abre um PR, sete agentes revêem em paralelo, orquestrador aprova e faz auto-merge ou bloqueia com sugestões" class="diagram-large" />
 
 ### Infraestrutura como Código (IaC)
 
@@ -44,7 +44,7 @@ Um programador abre um PR; sete agentes analisam o diff em paralelo e publicam c
 
 Acionado por alterações a ficheiros Terraform, o `iac_generator` valida a configuração de infraestrutura e estima custos via o CLI do Infracost, publicando um relatório no PR. O veredicto (`VERDICT: APPROVED` ou `VERDICT: BLOCKED`) decide se a pipeline avança para `terraform apply` ou abre uma issue de bloqueio no GitHub.
 
-![Diagrama: alterações Terraform acionam validação de IaC e estimativa de custos, condicionando o terraform apply ao veredicto](/images/aiops/uc2_iac_review.png)
+<img src="/images/aiops/uc2_iac_review.png" alt="Diagrama: alterações Terraform acionam validação de IaC e estimativa de custos, condicionando o terraform apply ao veredicto" class="diagram-large" />
 
 ### Kubernetes (auto-healing)
 
@@ -52,7 +52,7 @@ Acionado por alterações a ficheiros Terraform, o `iac_generator` valida a conf
 
 O Azure Monitor / Logic Apps deteta um pod Kubernetes a falhar e aciona o agente de auto-healing. O agente diagnostica a causa raiz e, consoante o tipo de falha, aplica uma correção automática (para estados reiniciáveis) ou reporta o incidente para intervenção manual — gerindo o ciclo de vida da issue no GitHub em ambos os casos: criada quando detetada, fechada automaticamente quando a recuperação é confirmada.
 
-![Diagrama: Azure Monitor deteta um pod a falhar, agente de auto-healing diagnostica e corrige ou reporta, issue no GitHub aberta e fechada automaticamente](/images/aiops/uc3_auto_healing.png)
+<img src="/images/aiops/uc3_auto_healing.png" alt="Diagrama: Azure Monitor deteta um pod a falhar, agente de auto-healing diagnostica e corrige ou reporta, issue no GitHub aberta e fechada automaticamente" class="diagram-large" />
 
 ### Camada MCP
 
@@ -60,17 +60,17 @@ O Azure Monitor / Logic Apps deteta um pod Kubernetes a falhar e aciona o agente
 
 Uma interação conversacional entre um programador e o sistema através da camada MCP, usando o Claude Desktop ou o Claude Code CLI — gerar, validar e estimar o custo de IaC, detetar drift, operar o cluster Kubernetes (auto-healing, listar pods, ler logs), e gerir PRs/issues no GitHub. Um veredicto de bloqueio ou drift detetado abre automaticamente uma issue no GitHub com os detalhes.
 
-![Diagrama: programador interage com ferramentas de IaC, Kubernetes e GitHub de forma conversacional através da camada MCP via Claude Desktop ou CLI](/images/aiops/uc4_mcp.png)
+<img src="/images/aiops/uc4_mcp.png" alt="Diagrama: programador interage com ferramentas de IaC, Kubernetes e GitHub de forma conversacional através da camada MCP via Claude Desktop ou CLI" class="diagram-large" />
 
 Ao nível de componentes, isto é um cliente LLM (Claude Desktop ou o Claude Code CLI) a consumir interfaces expostas pelos servidores MCP através do protocolo MCP/stdio, com cada servidor a encapsular um sistema externo — Kubernetes via chamadas subprocess ao `kubectl`, GitHub e Infracost via HTTPS, Terraform via subprocess do CLI e ferramentas de análise estática (`tfsec`, `checkov`).
 
-![Diagrama UML de componentes da camada MCP: um cliente LLM a consumir servidores MCP via stdio, cada servidor a encapsular um sistema externo via HTTPS ou subprocess](/images/aiops/mcp_componentes.png)
+<img src="/images/aiops/mcp_componentes.png" alt="Diagrama UML de componentes da camada MCP: um cliente LLM a consumir servidores MCP via stdio, cada servidor a encapsular um sistema externo via HTTPS ou subprocess" class="diagram-large" />
 
 ### Aplicação desktop
 
 **Uma terceira interface, para quem não quer um terminal — e agnóstica a provider por design.** Uma GUI em PyQt6 (empacotada de forma standalone com PyInstaller) envolve o agente de IaC numa janela de dois painéis — um painel de configuração para perfis de ligação e definições, um painel de output em streaming alimentado por uma thread de trabalho em segundo plano através de um temporizador de flush a cada 80ms, para a UI se manter responsiva enquanto o LLM transmite uma resposta em vez de bloquear à espera dela. Ao contrário do routing fixo Groq-primário/Azure-fallback da pipeline de CI, a app desktop deixa um utilizador guardar múltiplos perfis de ligação nomeados contra Azure OpenAI, Anthropic, Google Gemini, ou qualquer endpoint genérico compatível com OpenAI — para trocar de, digamos, Azure para Claude para um modelo alojado localmente ser um dropdown, não uma alteração de código. O `engine.py` guarda toda a lógica de IaC sem qualquer dependência do módulo do agente de CI, carregando os mesmos prompts de sistema partilhados em Markdown que os agentes da pipeline usam, para os dois nunca divergirem em comportamento; o `workers.py` corre as operações do engine numa `QThread`, a canalizar stdout/stderr para uma fila que alimenta a UI em tempo real.
 
-![Diagrama de pacotes da aplicação desktop: módulos PyQt6 (engine, workers, window, dialogs, config) e as suas dependências de prompts partilhados e sistemas externos](/images/aiops/desktop_app_pacotes.png)
+<img src="/images/aiops/desktop_app_pacotes.png" alt="Diagrama de pacotes da aplicação desktop: módulos PyQt6 (engine, workers, window, dialogs, config) e as suas dependências de prompts partilhados e sistemas externos" class="diagram-large" />
 
 **Validação on-premises, com a capacidade real da máquina alvo como contexto.** Selecionar "Local" em vez de um provider cloud muda a app para os mesmos prompts on-prem descritos acima, para ambientes sem conta cloud contra a qual validar. Para tornar a estimativa de custo/viabilidade nesse modo realmente útil em vez de um palpite às escuras, a app introduz **perfis de máquina** — registos persistentes do SO, núcleos de CPU, RAM, disco, GPU e largura de banda de rede de uma máquina alvo, geridos no separador Machines da janela de definições. Escolher um perfil ao correr uma estimativa local passa-o ao LLM como contexto, permitindo-lhe comparar o que a infraestrutura declarada realmente precisa contra o que essa máquina específica consegue fornecer — um edge server e um portátil de desenvolvimento são avaliados contra os seus próprios limites reais, não uma suposição genérica.
 
@@ -78,7 +78,7 @@ Ao nível de componentes, isto é um cliente LLM (Claude Desktop ou o Claude Cod
 
 Para um utilizador DevOps sem familiaridade com a linha de comandos ou pipelines de CI/CD: validar configurações de IaC, gerar templates, estimar custos (modo cloud ou local) e detetar drift, escolhendo o provider de LLM e — em modo local — um perfil de máquina pré-configurado. Ficheiros de IaC inalterados entre execuções são servidos a partir de uma cache em memória em vez de chamarem a API outra vez.
 
-![Diagrama: um utilizador DevOps valida, gera e estima custos de IaC através da GUI da aplicação desktop](/images/aiops/uc5_desktop_app.png)
+<img src="/images/aiops/uc5_desktop_app.png" alt="Diagrama: um utilizador DevOps valida, gera e estima custos de IaC através da GUI da aplicação desktop" class="diagram-large" />
 
 ### Fiabilidade: routing de LLM
 

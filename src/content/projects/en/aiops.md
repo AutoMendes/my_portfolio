@@ -20,7 +20,7 @@ The unglamorous parts of shipping software — reviewing pull requests thoroughl
 
 The system is organized as five sequential phases covering the full IaC lifecycle — Design (generate Terraform/Helm from a prompt), Review (seven agents + IaC diff analysis), Validation (orchestrator decision + deep IaC validation), Deploy (cost estimation, then staged rollout), and Operation (auto-healing + drift detection) — modeled below in C4 notation. The sections that follow break it down module by module.
 
-![Modular architecture of AI agents managing the IaC lifecycle, from a prompt through review, validation, deploy, and operation](/images/aiops/arquitetura_sistema_c4.png)
+<img src="/images/aiops/arquitetura_sistema_c4.png" alt="Modular architecture of AI agents managing the IaC lifecycle, from a prompt through review, validation, deploy, and operation" class="diagram-large" />
 
 ### PR Review
 
@@ -30,7 +30,7 @@ The system is organized as five sequential phases covering the full IaC lifecycl
 
 A developer opens a PR; seven agents analyze the diff in parallel and post structured comments. The orchestrator reads them and decides: no critical issues → approve and auto-merge (squash); otherwise → block and publish clickable fix suggestions the developer can accept and re-submit.
 
-![Diagram: developer opens a PR, seven agents review in parallel, orchestrator approves and auto-merges or blocks with suggestions](/images/aiops/uc1_pr_review.png)
+<img src="/images/aiops/uc1_pr_review.png" alt="Diagram: developer opens a PR, seven agents review in parallel, orchestrator approves and auto-merges or blocks with suggestions" class="diagram-large" />
 
 ### Infrastructure as Code (IaC)
 
@@ -44,7 +44,7 @@ A developer opens a PR; seven agents analyze the diff in parallel and post struc
 
 Triggered by changes to Terraform files, `iac_generator` validates the infrastructure configuration and estimates costs via the Infracost CLI, publishing a report on the PR. The verdict (`VERDICT: APPROVED` or `VERDICT: BLOCKED`) decides whether the pipeline proceeds to `terraform apply` or opens a blocking GitHub issue instead.
 
-![Diagram: Terraform changes trigger IaC validation and cost estimation, gating terraform apply on the verdict](/images/aiops/uc2_iac_review.png)
+<img src="/images/aiops/uc2_iac_review.png" alt="Diagram: Terraform changes trigger IaC validation and cost estimation, gating terraform apply on the verdict" class="diagram-large" />
 
 ### Kubernetes (auto-healing)
 
@@ -52,7 +52,7 @@ Triggered by changes to Terraform files, `iac_generator` validates the infrastru
 
 Azure Monitor / Logic Apps detects a failing Kubernetes pod and triggers the auto-healing agent. The agent diagnoses the root cause and, depending on the failure type, applies an automatic fix (for restartable states) or reports the incident for manual intervention — managing the GitHub issue's lifecycle either way: opened on detection, closed automatically on confirmed recovery.
 
-![Diagram: Azure Monitor detects a failing pod, auto-healing agent diagnoses and fixes or reports, GitHub issue opened and closed automatically](/images/aiops/uc3_auto_healing.png)
+<img src="/images/aiops/uc3_auto_healing.png" alt="Diagram: Azure Monitor detects a failing pod, auto-healing agent diagnoses and fixes or reports, GitHub issue opened and closed automatically" class="diagram-large" />
 
 ### MCP layer
 
@@ -60,17 +60,17 @@ Azure Monitor / Logic Apps detects a failing Kubernetes pod and triggers the aut
 
 A conversational interaction between a developer and the system through the MCP layer, using Claude Desktop or the Claude Code CLI — generating, validating, and estimating the cost of IaC, detecting drift, operating the Kubernetes cluster (auto-healing, listing pods, reading logs), and managing PRs/issues on GitHub. A blocking verdict or detected drift automatically opens a GitHub issue with the details.
 
-![Diagram: developer interacts with IaC, Kubernetes, and GitHub tools conversationally through the MCP layer via Claude Desktop or CLI](/images/aiops/uc4_mcp.png)
+<img src="/images/aiops/uc4_mcp.png" alt="Diagram: developer interacts with IaC, Kubernetes, and GitHub tools conversationally through the MCP layer via Claude Desktop or CLI" class="diagram-large" />
 
 At the component level, this is an LLM client (Claude Desktop or the Claude Code CLI) consuming interfaces exposed by the MCP servers over the MCP/stdio protocol, with each server wrapping an external system in turn — Kubernetes via `kubectl` subprocess calls, GitHub and Infracost via HTTPS, Terraform via CLI subprocess and static analysis tools (`tfsec`, `checkov`).
 
-![UML component diagram of the MCP layer: an LLM client consuming MCP servers over stdio, each server wrapping an external system via HTTPS or subprocess](/images/aiops/mcp_componentes.png)
+<img src="/images/aiops/mcp_componentes.png" alt="UML component diagram of the MCP layer: an LLM client consuming MCP servers over stdio, each server wrapping an external system via HTTPS or subprocess" class="diagram-large" />
 
 ### Desktop app
 
 **A third interface, for people who don't want a terminal — and provider-agnostic by design.** A PyQt6 GUI (packaged standalone with PyInstaller) wraps the IaC agent behind a two-panel window — a config panel for connection profiles and settings, a streaming output panel fed by a background worker thread through an 80ms-interval flush timer so the UI stays responsive while the LLM streams a response instead of blocking on it. Unlike the CI pipeline's fixed Groq-primary/Azure-fallback routing, the desktop app lets a user save multiple named connection profiles against Azure OpenAI, Anthropic, Google Gemini, or any generic OpenAI-compatible endpoint — so switching from, say, Azure to Claude to a locally-hosted model is a dropdown, not a code change. `engine.py` holds all the IaC logic with zero dependency on the CI agent module, loading the same shared Markdown system prompts the pipeline agents use so the two never drift out of sync in behavior; `workers.py` runs engine operations on a `QThread`, piping stdout/stderr into a queue that feeds the UI in real time.
 
-![Package diagram of the desktop app: PyQt6 modules (engine, workers, window, dialogs, config) and their dependencies on shared prompts and external systems](/images/aiops/desktop_app_pacotes.png)
+<img src="/images/aiops/desktop_app_pacotes.png" alt="Package diagram of the desktop app: PyQt6 modules (engine, workers, window, dialogs, config) and their dependencies on shared prompts and external systems" class="diagram-large" />
 
 **On-premises validation, with the target machine's real capacity as context.** Selecting "Local" instead of a cloud provider switches the app to the same on-prem-specific prompts described above, for environments with no cloud account to validate against. To make cost/feasibility estimation there actually useful instead of a guess in the dark, the app introduces **machine profiles** — persistent records of a target machine's OS, CPU cores, RAM, disk, GPU, and network bandwidth, managed in the Settings window's Machines tab. Pick a profile when running a local estimate and it's passed to the LLM as context, letting it compare what the declared infrastructure actually needs against what that specific machine can provide — an edge server and a dev laptop get evaluated against their own real limits, not a generic assumption.
 
@@ -78,7 +78,7 @@ At the component level, this is an LLM client (Claude Desktop or the Claude Code
 
 For a DevOps user without CLI or CI/CD pipeline familiarity: validate IaC configurations, generate templates, estimate costs (cloud or local mode), and detect drift, choosing the LLM provider and — in local mode — a pre-configured machine profile. Unchanged IaC files between runs are served from an in-memory cache instead of re-hitting the API.
 
-![Diagram: a DevOps user validates, generates, and estimates costs for IaC through the desktop app's GUI](/images/aiops/uc5_desktop_app.png)
+<img src="/images/aiops/uc5_desktop_app.png" alt="Diagram: a DevOps user validates, generates, and estimates costs for IaC through the desktop app's GUI" class="diagram-large" />
 
 ### Reliability: LLM routing
 
