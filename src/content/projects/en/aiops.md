@@ -16,51 +16,65 @@ caseStudy:
 
 The unglamorous parts of shipping software — reviewing pull requests thoroughly, keeping infrastructure-as-code safe and cost-aware, noticing and fixing a failing pod at 3am — are exactly the parts that get skipped under time pressure, even though they're where real incidents come from. The project's premise was to point LLMs at those specific parts, not as a chatbot bolted onto the side of DevOps, but wired directly into the pipeline, Kubernetes, and the terminal a human would already be using.
 
-## Architecture decisions
+## Architecture
 
-The architecture ended up organized as five sequential phases covering the full IaC lifecycle — Design (generate Terraform/Helm from a prompt), Review (seven agents + IaC diff analysis), Validation (orchestrator decision + deep IaC validation), Deploy (cost estimation, then staged rollout), and Operation (auto-healing + drift detection) — modeled below in C4 notation.
+The system is organized as five sequential phases covering the full IaC lifecycle — Design (generate Terraform/Helm from a prompt), Review (seven agents + IaC diff analysis), Validation (orchestrator decision + deep IaC validation), Deploy (cost estimation, then staged rollout), and Operation (auto-healing + drift detection) — modeled below in C4 notation. The sections that follow break it down module by module.
 
 ![Modular architecture of AI agents managing the IaC lifecycle, from a prompt through review, validation, deploy, and operation](/images/aiops/arquitetura_sistema_c4.png)
+
+### PR Review
 
 **Seven narrow reviewer agents, one orchestrator that only speaks after all of them do.** Every PR against `dev`/`main` gets reviewed in parallel by specialized agents — code quality, security, tests, performance, documentation, Docker, and pipeline/CI config — each posting its own comment with a severity marker (🔴 CRITICAL, 🟡 WARNING, 💡 SUGGESTION). None of them talk to each other or need to agree; a separate orchestrator runs only once they're all done and makes the one decision that matters: any CRITICAL blocks the merge, nothing else does. Splitting "notice problems" from "decide what to do about them" kept each individual agent simple and let the blocking policy live in exactly one place.
 
 **Fixes as clickable GitHub suggestions, not just comments.** When the orchestrator blocks a PR, it doesn't stop at a report — it generates concrete fixes via the LLM and publishes them as native GitHub review suggestion blocks in the Files Changed tab, so a developer can click "Commit all suggestions" and apply them in one action instead of manually implementing what an AI agent already wrote out.
 
-**MCP servers as the one interface layer, used by both the pipeline and a human.** Five custom MCP servers (GitHub, Kubernetes, IaC, Infracost, Log Analytics) expose the same primitives — `list_pods`, `get_pod_logs`, `get_pod_events`, Terraform validation, cost estimation — as tools. The CI auto-healing agent and the Kubernetes MCP server call the exact same kind of `kubectl` wrapper functions under the hood; the difference is only *who's driving*. Wire the servers into Claude Desktop with the provided prompts (`iac_validate`, `iac_generate`, `iac_costs`, `auto_healing`, …) and a person gets the same diagnostic and remediation tools interactively that the pipeline uses autonomously — one integration layer, two consumers. At the component level, this is an LLM client (Claude Desktop or the Claude Code CLI) consuming interfaces exposed by the MCP servers over the MCP/stdio protocol, with each server wrapping an external system in turn — Kubernetes via `kubectl` subprocess calls, GitHub and Infracost via HTTPS, Terraform via CLI subprocess and static analysis tools (`tfsec`, `checkov`).
+A developer opens a PR; seven agents analyze the diff in parallel and post structured comments. The orchestrator reads them and decides: no critical issues → approve and auto-merge (squash); otherwise → block and publish clickable fix suggestions the developer can accept and re-submit.
 
-![UML component diagram of the MCP layer: an LLM client consuming MCP servers over stdio, each server wrapping an external system via HTTPS or subprocess](/images/aiops/mcp_componentes.png)
+![Diagram: developer opens a PR, seven agents review in parallel, orchestrator approves and auto-merges or blocks with suggestions](/images/aiops/uc1_pr_review.png)
 
-**A native desktop app as a third interface, for people who don't want a terminal — and provider-agnostic by design.** A PyQt6 GUI (packaged standalone with PyInstaller) wraps the IaC agent behind a two-panel window — a config panel for connection profiles and settings, a streaming output panel fed by a background worker thread through an 80ms-interval flush timer so the UI stays responsive while the LLM streams a response instead of blocking on it. Unlike the CI pipeline's fixed Groq-primary/Azure-fallback routing, the desktop app lets a user save multiple named connection profiles against Azure OpenAI, Anthropic, Google Gemini, or any generic OpenAI-compatible endpoint — so switching from, say, Azure to Claude to a locally-hosted model is a dropdown, not a code change. `engine.py` holds all the IaC logic with zero dependency on the CI agent module, loading the same shared Markdown system prompts the pipeline agents use so the two never drift out of sync in behavior; `workers.py` runs engine operations on a `QThread`, piping stdout/stderr into a queue that feeds the UI in real time.
+### Infrastructure as Code (IaC)
 
-![Package diagram of the desktop app: PyQt6 modules (engine, workers, window, dialogs, config) and their dependencies on shared prompts and external systems](/images/aiops/desktop_app_pacotes.png)
-
-**LLM calls route through a primary/fallback provider chain, not one hardcoded API.** Groq is the primary provider, with Azure OpenAI configured as an automatic fallback (`LLM_PRIMARY_PROVIDER`/`LLM_FALLBACK_PROVIDER`), so a single provider outage doesn't take down PR review, IaC validation, or auto-healing all at once — a real reliability decision, not a hypothetical one, for something meant to run unattended in CI.
+**`iac_generator`, one module, five modes.** The same agent handles `generate` (Terraform/Helm templates from a natural-language prompt), `validate`, `fix`, `ci` (PR/push validation with a blocking verdict), and `cost` (Infracost-based estimation) — one codebase behind all five, rather than a separate tool per concern that would drift apart over time.
 
 **Drift detection as its own recurring check, not a one-time apply.** Infrastructure isn't assumed to stay the way Terraform left it — a scheduled `terraform plan -detailed-exitcode` against the real cloud state reports one of three outcomes (no drift, error, drift detected) via Terraform's own exit code convention, so manual changes made outside the pipeline get surfaced instead of silently diverging from what's declared in code.
 
-**Auto-healing that triages before it acts, and never mutates the cluster directly.** Pod failure states are split into ones that are safe to auto-remediate (`CrashLoopBackOff`, `Error`, `OOMKilled`, `Failed`) and ones that are report-only (`ImagePullBackOff`, `Pending`) because blindly restarting those wouldn't fix — and might mask — the real problem. On top of that, a heuristic (pod age under 10 minutes *and* 2+ restarts) flags a likely bad deploy; when it fires, the fix isn't a direct `kubectl rollback` — it's a git commit reverting the relevant Helm values file on the branch that namespace's ArgoCD Application tracks, so the cluster gets fixed through the same GitOps path every other deploy goes through, with no drift between what auto-healing did and what the deployment pipeline believes is live.
+Triggered by changes to Terraform files, `iac_generator` validates the infrastructure configuration and estimates costs via the Infracost CLI, publishing a report on the PR. The verdict (`VERDICT: APPROVED` or `VERDICT: BLOCKED`) decides whether the pipeline proceeds to `terraform apply` or opens a blocking GitHub issue instead.
 
-## Use cases
+![Diagram: Terraform changes trigger IaC validation and cost estimation, gating terraform apply on the verdict](/images/aiops/uc2_iac_review.png)
 
-**UC1 — Automated PR review.** A developer opens a PR; seven agents analyze the diff in parallel and post structured comments. The orchestrator reads them and decides: no critical issues → approve and auto-merge (squash); otherwise → block and publish clickable fix suggestions the developer can accept and re-submit.
+### Kubernetes (auto-healing)
 
-![UC1 diagram: developer opens a PR, seven agents review in parallel, orchestrator approves and auto-merges or blocks with suggestions](/images/aiops/uc1_pr_review.png)
+**Triage before action, never a direct cluster mutation.** Pod failure states are split into ones that are safe to auto-remediate (`CrashLoopBackOff`, `Error`, `OOMKilled`, `Failed`) and ones that are report-only (`ImagePullBackOff`, `Pending`) because blindly restarting those wouldn't fix — and might mask — the real problem. On top of that, a heuristic (pod age under 10 minutes *and* 2+ restarts) flags a likely bad deploy; when it fires, the fix isn't a direct `kubectl rollback` — it's a git commit reverting the relevant Helm values file on the branch that namespace's ArgoCD Application tracks, so the cluster gets fixed through the same GitOps path every other deploy goes through, with no drift between what auto-healing did and what the deployment pipeline believes is live.
 
-**UC2 — IaC review and deploy.** Triggered by changes to Terraform files. `iac_generator` validates the infrastructure configuration and estimates costs via the Infracost CLI, publishing a report on the PR. The verdict (`VERDICT: APPROVED` or `VERDICT: BLOCKED`) decides whether the pipeline proceeds to `terraform apply` or opens a blocking GitHub issue instead.
+Azure Monitor / Logic Apps detects a failing Kubernetes pod and triggers the auto-healing agent. The agent diagnoses the root cause and, depending on the failure type, applies an automatic fix (for restartable states) or reports the incident for manual intervention — managing the GitHub issue's lifecycle either way: opened on detection, closed automatically on confirmed recovery.
 
-![UC2 diagram: Terraform changes trigger IaC validation and cost estimation, gating terraform apply on the verdict](/images/aiops/uc2_iac_review.png)
+![Diagram: Azure Monitor detects a failing pod, auto-healing agent diagnoses and fixes or reports, GitHub issue opened and closed automatically](/images/aiops/uc3_auto_healing.png)
 
-**UC3 — Monitoring and auto-healing.** Azure Monitor / Logic Apps detects a failing Kubernetes pod and triggers the auto-healing agent. The agent diagnoses the root cause and, depending on the failure type, applies an automatic fix (for restartable states) or reports the incident for manual intervention — managing the GitHub issue's lifecycle either way: opened on detection, closed automatically on confirmed recovery.
+### MCP layer
 
-![UC3 diagram: Azure Monitor detects a failing pod, auto-healing agent diagnoses and fixes or reports, GitHub issue opened and closed automatically](/images/aiops/uc3_auto_healing.png)
+**One interface layer, used by both the pipeline and a human.** Five custom MCP servers (GitHub, Kubernetes, IaC, Infracost, Log Analytics) expose the same primitives — `list_pods`, `get_pod_logs`, `get_pod_events`, Terraform validation, cost estimation — as tools. The CI auto-healing agent and the Kubernetes MCP server call the exact same kind of `kubectl` wrapper functions under the hood; the difference is only *who's driving*. Wire the servers into Claude Desktop with the provided prompts (`iac_validate`, `iac_generate`, `iac_costs`, `auto_healing`, …) and a person gets the same diagnostic and remediation tools interactively that the pipeline uses autonomously — one integration layer, two consumers.
 
-**UC4 — Infrastructure management via MCP.** A conversational interaction between a developer and the system through the MCP layer, using Claude Desktop or the Claude Code CLI — generating, validating, and estimating the cost of IaC, detecting drift, operating the Kubernetes cluster (auto-healing, listing pods, reading logs), and managing PRs/issues on GitHub. A blocking verdict or detected drift automatically opens a GitHub issue with the details.
+A conversational interaction between a developer and the system through the MCP layer, using Claude Desktop or the Claude Code CLI — generating, validating, and estimating the cost of IaC, detecting drift, operating the Kubernetes cluster (auto-healing, listing pods, reading logs), and managing PRs/issues on GitHub. A blocking verdict or detected drift automatically opens a GitHub issue with the details.
 
-![UC4 diagram: developer interacts with IaC, Kubernetes, and GitHub tools conversationally through the MCP layer via Claude Desktop or CLI](/images/aiops/uc4_mcp.png)
+![Diagram: developer interacts with IaC, Kubernetes, and GitHub tools conversationally through the MCP layer via Claude Desktop or CLI](/images/aiops/uc4_mcp.png)
 
-**UC5 — IaC management via the desktop app.** For a DevOps user without CLI or CI/CD pipeline familiarity: validate IaC configurations, generate templates, estimate costs (cloud or local mode), and detect drift, choosing the LLM provider and — in local mode — a pre-configured machine profile. Unchanged IaC files between runs are served from an in-memory cache instead of re-hitting the API.
+At the component level, this is an LLM client (Claude Desktop or the Claude Code CLI) consuming interfaces exposed by the MCP servers over the MCP/stdio protocol, with each server wrapping an external system in turn — Kubernetes via `kubectl` subprocess calls, GitHub and Infracost via HTTPS, Terraform via CLI subprocess and static analysis tools (`tfsec`, `checkov`).
 
-![UC5 diagram: a DevOps user validates, generates, and estimates costs for IaC through the desktop app's GUI](/images/aiops/uc5_desktop_app.png)
+![UML component diagram of the MCP layer: an LLM client consuming MCP servers over stdio, each server wrapping an external system via HTTPS or subprocess](/images/aiops/mcp_componentes.png)
+
+### Desktop app
+
+**A third interface, for people who don't want a terminal — and provider-agnostic by design.** A PyQt6 GUI (packaged standalone with PyInstaller) wraps the IaC agent behind a two-panel window — a config panel for connection profiles and settings, a streaming output panel fed by a background worker thread through an 80ms-interval flush timer so the UI stays responsive while the LLM streams a response instead of blocking on it. Unlike the CI pipeline's fixed Groq-primary/Azure-fallback routing, the desktop app lets a user save multiple named connection profiles against Azure OpenAI, Anthropic, Google Gemini, or any generic OpenAI-compatible endpoint — so switching from, say, Azure to Claude to a locally-hosted model is a dropdown, not a code change. `engine.py` holds all the IaC logic with zero dependency on the CI agent module, loading the same shared Markdown system prompts the pipeline agents use so the two never drift out of sync in behavior; `workers.py` runs engine operations on a `QThread`, piping stdout/stderr into a queue that feeds the UI in real time.
+
+![Package diagram of the desktop app: PyQt6 modules (engine, workers, window, dialogs, config) and their dependencies on shared prompts and external systems](/images/aiops/desktop_app_pacotes.png)
+
+For a DevOps user without CLI or CI/CD pipeline familiarity: validate IaC configurations, generate templates, estimate costs (cloud or local mode), and detect drift, choosing the LLM provider and — in local mode — a pre-configured machine profile. Unchanged IaC files between runs are served from an in-memory cache instead of re-hitting the API.
+
+![Diagram: a DevOps user validates, generates, and estimates costs for IaC through the desktop app's GUI](/images/aiops/uc5_desktop_app.png)
+
+### Reliability: LLM routing
+
+**A primary/fallback provider chain, not one hardcoded API.** Groq is the primary provider, with Azure OpenAI configured as an automatic fallback (`LLM_PRIMARY_PROVIDER`/`LLM_FALLBACK_PROVIDER`), so a single provider outage doesn't take down PR review, IaC validation, or auto-healing all at once — a real reliability decision, not a hypothetical one, for something meant to run unattended in CI.
 
 ## The hardest part
 
