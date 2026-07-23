@@ -16,6 +16,10 @@ caseStudy:
 
 The unglamorous parts of shipping software — reviewing pull requests thoroughly, keeping infrastructure-as-code safe and cost-aware, noticing and fixing a failing pod at 3am — are exactly the parts that get skipped under time pressure, even though they're where real incidents come from. The project's premise was to point LLMs at those specific parts, not as a chatbot bolted onto the side of DevOps, but wired directly into the pipeline, Kubernetes, and the terminal a human would already be using.
 
+The architecture ended up organized as five sequential phases covering the full IaC lifecycle — Design (generate Terraform/Helm from a prompt), Review (seven agents + IaC diff analysis), Validation (orchestrator decision + deep IaC validation), Deploy (cost estimation, then staged rollout), and Operation (auto-healing + drift detection) — modeled below in C4 notation.
+
+![Modular architecture of AI agents managing the IaC lifecycle, from a prompt through review, validation, deploy, and operation](/images/aiops/arquitetura_sistema_c4.png)
+
 ## Architecture decisions
 
 **Seven narrow reviewer agents, one orchestrator that only speaks after all of them do.** Every PR against `dev`/`main` gets reviewed in parallel by specialized agents — code quality, security, tests, performance, documentation, Docker, and pipeline/CI config — each posting its own comment with a severity marker (🔴 CRITICAL, 🟡 WARNING, 💡 SUGGESTION). None of them talk to each other or need to agree; a separate orchestrator runs only once they're all done and makes the one decision that matters: any CRITICAL blocks the merge, nothing else does. Splitting "notice problems" from "decide what to do about them" kept each individual agent simple and let the blocking policy live in exactly one place.
@@ -32,6 +36,28 @@ The unglamorous parts of shipping software — reviewing pull requests thoroughl
 
 **Auto-healing that triages before it acts, and never mutates the cluster directly.** Pod failure states are split into ones that are safe to auto-remediate (`CrashLoopBackOff`, `Error`, `OOMKilled`, `Failed`) and ones that are report-only (`ImagePullBackOff`, `Pending`) because blindly restarting those wouldn't fix — and might mask — the real problem. On top of that, a heuristic (pod age under 10 minutes *and* 2+ restarts) flags a likely bad deploy; when it fires, the fix isn't a direct `kubectl rollback` — it's a git commit reverting the relevant Helm values file on the branch that namespace's ArgoCD Application tracks, so the cluster gets fixed through the same GitOps path every other deploy goes through, with no drift between what auto-healing did and what the deployment pipeline believes is live.
 
+## Use cases
+
+**UC1 — Automated PR review.** A developer opens a PR; seven agents analyze the diff in parallel and post structured comments. The orchestrator reads them and decides: no critical issues → approve and auto-merge (squash); otherwise → block and publish clickable fix suggestions the developer can accept and re-submit.
+
+![UC1 diagram: developer opens a PR, seven agents review in parallel, orchestrator approves and auto-merges or blocks with suggestions](/images/aiops/uc1_pr_review.png)
+
+**UC2 — IaC review and deploy.** Triggered by changes to Terraform files. `iac_generator` validates the infrastructure configuration and estimates costs via the Infracost CLI, publishing a report on the PR. The verdict (`VERDICT: APPROVED` or `VERDICT: BLOCKED`) decides whether the pipeline proceeds to `terraform apply` or opens a blocking GitHub issue instead.
+
+![UC2 diagram: Terraform changes trigger IaC validation and cost estimation, gating terraform apply on the verdict](/images/aiops/uc2_iac_review.png)
+
+**UC3 — Monitoring and auto-healing.** Azure Monitor / Logic Apps detects a failing Kubernetes pod and triggers the auto-healing agent. The agent diagnoses the root cause and, depending on the failure type, applies an automatic fix (for restartable states) or reports the incident for manual intervention — managing the GitHub issue's lifecycle either way: opened on detection, closed automatically on confirmed recovery.
+
+![UC3 diagram: Azure Monitor detects a failing pod, auto-healing agent diagnoses and fixes or reports, GitHub issue opened and closed automatically](/images/aiops/uc3_auto_healing.png)
+
+**UC4 — Infrastructure management via MCP.** A conversational interaction between a developer and the system through the MCP layer, using Claude Desktop or the Claude Code CLI — generating, validating, and estimating the cost of IaC, detecting drift, operating the Kubernetes cluster (auto-healing, listing pods, reading logs), and managing PRs/issues on GitHub. A blocking verdict or detected drift automatically opens a GitHub issue with the details.
+
+![UC4 diagram: developer interacts with IaC, Kubernetes, and GitHub tools conversationally through the MCP layer via Claude Desktop or CLI](/images/aiops/uc4_mcp.png)
+
+**UC5 — IaC management via the desktop app.** For a DevOps user without CLI or CI/CD pipeline familiarity: validate IaC configurations, generate templates, estimate costs (cloud or local mode), and detect drift, choosing the LLM provider and — in local mode — a pre-configured machine profile. Unchanged IaC files between runs are served from an in-memory cache instead of re-hitting the API.
+
+![UC5 diagram: a DevOps user validates, generates, and estimates costs for IaC through the desktop app's GUI](/images/aiops/uc5_desktop_app.png)
+
 ## The hardest part
 
 Deciding how much to actually trust the automation near things that matter — a PR that gets auto-merged, a pod that gets "fixed," a Terraform plan that gets applied. The answer wasn't "trust it less," it was building the guardrails into the architecture itself instead of hoping the LLM behaves: CRITICAL severity is a hard gate on PR review regardless of what else an agent says, restart-worthy vs. report-only pod states are a hardcoded allowlist rather than an LLM judgment call, a bad deploy gets rolled back through Git/ArgoCD instead of an imperative cluster mutation, and Terraform applies run through OIDC rather than long-lived cloud credentials. The LLM decides *what's wrong and what the fix should look like*; it never gets to decide *whether it's allowed to act* — that boundary is fixed code, not a prompt.
@@ -39,3 +65,7 @@ Deciding how much to actually trust the automation near things that matter — a
 ## Result
 
 A working pipeline demonstrated end to end with two deliberately paired demo APIs: a broken one with planted issues (hardcoded secrets, SQL injection, no auth, an O(n²) hot path, missing tests and docs) that the pipeline catches and blocks, and a secured version of the same API that sails through and auto-merges — proving the review agents catch what they're supposed to, not just that they run. Alongside it, a simulated pod crash triggers the full auto-healing loop (detect → read logs/events → diagnose → fix → confirm recovery → open/close a GitHub issue), and the IaC pipeline runs Terraform validation and Infracost-based cost estimation on every infrastructure change before it's applied.
+
+![A blocked PR with LLM-generated fix suggestions shown as clickable GitHub review blocks](/images/aiops/pr_sugestoes_clicaveis_en.png)
+
+![The PyQt6 desktop app: config panel on the left, streaming output on the right](/images/aiops/desktop_app_main.png)
