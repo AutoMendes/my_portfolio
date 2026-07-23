@@ -17,9 +17,14 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     return redirect(`${safeRedirect}?error=missing`, 303);
   }
 
-  const resend = new Resend(import.meta.env.RESEND_API_KEY);
+  const apiKey = import.meta.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.error('RESEND_API_KEY is not set');
+    return redirect(`${safeRedirect}?error=send`, 303);
+  }
 
   try {
+    const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
       from: `${name} via Portfolio Contact <onboarding@resend.dev>`,
       to: 'tiagolobo.eng@gmail.com',
