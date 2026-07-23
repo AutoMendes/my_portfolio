@@ -50,3 +50,14 @@ summary {
 summary::-webkit-details-marker {
   display: none;
 }
+
+.tag-scroll {
+  scrollbar-width: thin;
+}
+.tag-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.tag-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 2px;
+}
