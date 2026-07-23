@@ -60,7 +60,7 @@ Azure Monitor / Logic Apps detects a failing Kubernetes pod and triggers the aut
 
 A conversational interaction between a developer and the system through the MCP layer, using Claude Desktop or the Claude Code CLI — generating, validating, and estimating the cost of IaC, detecting drift, operating the Kubernetes cluster (auto-healing, listing pods, reading logs), and managing PRs/issues on GitHub. A blocking verdict or detected drift automatically opens a GitHub issue with the details.
 
-<img src="/images/aiops/uc4_mcp.png" alt="Diagram: developer interacts with IaC, Kubernetes, and GitHub tools conversationally through the MCP layer via Claude Desktop or CLI" class="diagram-large" />
+![Diagram: developer interacts with IaC, Kubernetes, and GitHub tools conversationally through the MCP layer via Claude Desktop or CLI](/images/aiops/uc4_mcp.png)
 
 At the component level, this is an LLM client (Claude Desktop or the Claude Code CLI) consuming interfaces exposed by the MCP servers over the MCP/stdio protocol, with each server wrapping an external system in turn — Kubernetes via `kubectl` subprocess calls, GitHub and Infracost via HTTPS, Terraform via CLI subprocess and static analysis tools (`tfsec`, `checkov`).
 
@@ -78,7 +78,7 @@ At the component level, this is an LLM client (Claude Desktop or the Claude Code
 
 For a DevOps user without CLI or CI/CD pipeline familiarity: validate IaC configurations, generate templates, estimate costs (cloud or local mode), and detect drift, choosing the LLM provider and — in local mode — a pre-configured machine profile. Unchanged IaC files between runs are served from an in-memory cache instead of re-hitting the API.
 
-<img src="/images/aiops/uc5_desktop_app.png" alt="Diagram: a DevOps user validates, generates, and estimates costs for IaC through the desktop app's GUI" class="diagram-large" />
+![Diagram: a DevOps user validates, generates, and estimates costs for IaC through the desktop app's GUI](/images/aiops/uc5_desktop_app.png)
 
 ### Reliability: LLM routing
 

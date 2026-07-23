@@ -60,7 +60,7 @@ O Azure Monitor / Logic Apps deteta um pod Kubernetes a falhar e aciona o agente
 
 Uma interação conversacional entre um programador e o sistema através da camada MCP, usando o Claude Desktop ou o Claude Code CLI — gerar, validar e estimar o custo de IaC, detetar drift, operar o cluster Kubernetes (auto-healing, listar pods, ler logs), e gerir PRs/issues no GitHub. Um veredicto de bloqueio ou drift detetado abre automaticamente uma issue no GitHub com os detalhes.
 
-<img src="/images/aiops/uc4_mcp.png" alt="Diagrama: programador interage com ferramentas de IaC, Kubernetes e GitHub de forma conversacional através da camada MCP via Claude Desktop ou CLI" class="diagram-large" />
+![Diagrama: programador interage com ferramentas de IaC, Kubernetes e GitHub de forma conversacional através da camada MCP via Claude Desktop ou CLI](/images/aiops/uc4_mcp.png)
 
 Ao nível de componentes, isto é um cliente LLM (Claude Desktop ou o Claude Code CLI) a consumir interfaces expostas pelos servidores MCP através do protocolo MCP/stdio, com cada servidor a encapsular um sistema externo — Kubernetes via chamadas subprocess ao `kubectl`, GitHub e Infracost via HTTPS, Terraform via subprocess do CLI e ferramentas de análise estática (`tfsec`, `checkov`).
 
@@ -78,7 +78,7 @@ Ao nível de componentes, isto é um cliente LLM (Claude Desktop ou o Claude Cod
 
 Para um utilizador DevOps sem familiaridade com a linha de comandos ou pipelines de CI/CD: validar configurações de IaC, gerar templates, estimar custos (modo cloud ou local) e detetar drift, escolhendo o provider de LLM e — em modo local — um perfil de máquina pré-configurado. Ficheiros de IaC inalterados entre execuções são servidos a partir de uma cache em memória em vez de chamarem a API outra vez.
 
-<img src="/images/aiops/uc5_desktop_app.png" alt="Diagrama: um utilizador DevOps valida, gera e estima custos de IaC através da GUI da aplicação desktop" class="diagram-large" />
+![Diagrama: um utilizador DevOps valida, gera e estima custos de IaC através da GUI da aplicação desktop](/images/aiops/uc5_desktop_app.png)
 
 ### Fiabilidade: routing de LLM
 
