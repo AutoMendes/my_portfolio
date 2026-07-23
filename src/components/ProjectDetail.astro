@@ -29,7 +29,7 @@ const { Content } = await render(project);
 	<p class="mt-6 leading-relaxed" style={{ color: 'var(--text-body)' }}>{project.data.description}</p>
 
 	{project.data.caseStudy && (
-		<div class="prose mt-8">
+		<div class="prose mt-8 max-w-none">
 			<Content />
 		</div>
 	)}
