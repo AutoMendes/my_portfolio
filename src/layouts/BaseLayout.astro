@@ -2,7 +2,9 @@
 import '../styles/global.css';
 import { getLangFromUrl, useTranslations } from '../i18n/utils';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { ArcadeModeController } from '../components/ArcadeModeController';
 import { THEME_STORAGE_KEY } from '../lib/theme';
+import { getAllProjects } from '../lib/projects';
 
 interface Props {
   title: string;
@@ -13,6 +15,14 @@ const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 
 const prefix = lang === 'en' ? '' : `/${lang}`;
+
+const allProjects = await getAllProjects(lang);
+const arcadeProjects = allProjects.map((project) => ({
+  slug: project.id.split('/').slice(1).join('/'),
+  title: project.data.title,
+  description: project.data.description,
+  href: `${prefix}/projects/${project.id.split('/').slice(1).join('/')}`,
+}));
 ---
 
 <html lang={lang}>
@@ -54,8 +64,9 @@ const prefix = lang === 'en' ? '' : `/${lang}`;
 			<slot />
 		</main>
 
-		<footer class="border-t border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-800">
-			&copy; {new Date().getFullYear()} Tiago Lobo
+		<footer class="flex items-center justify-center gap-3 border-t border-gray-200 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-800">
+			<span>&copy; {new Date().getFullYear()} Tiago Lobo</span>
+			<ArcadeModeController projects={arcadeProjects} client:load />
 		</footer>
 	</body>
 </html>
