@@ -1,0 +1,63 @@
+---
+import ProjectCard from './ProjectCard.astro';
+import { getAllProjects } from '../lib/projects';
+import { useTranslations } from '../i18n/utils';
+import type { Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  prefix: string;
+}
+
+const { locale, prefix } = Astro.props;
+const t = useTranslations(locale);
+const projects = await getAllProjects(locale);
+const slug = (id: string) => id.split('/').slice(1).join('/');
+
+const allTags = [...new Set(projects.flatMap((p) => p.data.tags))].sort();
+---
+
+<h1 class="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>{t('projects.title')}</h1>
+
+<div class="mt-4 flex flex-wrap gap-2" id="tag-filters">
+	<button type="button" data-tag="" class="tag-filter-btn rounded px-3 py-1 text-sm" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
+		{t('projects.filterAll')}
+	</button>
+	{allTags.map((tag) => (
+		<button type="button" data-tag={tag} class="tag-filter-btn rounded px-3 py-1 text-sm" style={{ background: 'var(--bg-chrome)', color: 'var(--text-secondary)' }}>
+			{tag}
+		</button>
+	))}
+</div>
+
+<div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2" id="project-grid">
+	{projects.map((project) => (
+		<ProjectCard
+			href={`${prefix}/projects/${slug(project.id)}`}
+			title={project.data.title}
+			org={project.data.org}
+			dateRange={project.data.dateRange}
+			description={project.data.description}
+			tags={project.data.tags}
+		/>
+	))}
+</div>
+
+<script>
+	const filterButtons = document.querySelectorAll<HTMLButtonElement>('.tag-filter-btn');
+	const cards = document.querySelectorAll<HTMLElement>('#project-grid [data-tags]');
+
+	filterButtons.forEach((button) => {
+		button.addEventListener('click', () => {
+			const tag = button.dataset.tag ?? '';
+
+			filterButtons.forEach((b) => b.setAttribute('data-active', String(b === button)));
+
+			cards.forEach((card) => {
+				const cardTags = (card.dataset.tags ?? '').split(',');
+				const visible = tag === '' || cardTags.includes(tag);
+				card.style.display = visible ? '' : 'none';
+			});
+		});
+	});
+</script>

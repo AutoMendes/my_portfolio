@@ -11,12 +11,18 @@ export const ui = {
     'nav.projects': 'Projects',
     'nav.about': 'About',
     'nav.contact': 'Contact',
+    'projects.title': 'Projects',
+    'projects.filterAll': 'All',
+    'projects.caseStudySoon': 'Case study coming soon.',
   },
   pt: {
     'nav.home': 'Início',
     'nav.projects': 'Projetos',
     'nav.about': 'Sobre',
     'nav.contact': 'Contacto',
+    'projects.title': 'Projetos',
+    'projects.filterAll': 'Todos',
+    'projects.caseStudySoon': 'Case study brevemente.',
   },
 } as const;
 

@@ -1,0 +1,30 @@
+---
+interface Props {
+  href: string;
+  title: string;
+  org: string;
+  dateRange: string;
+  description: string;
+  tags: string[];
+}
+
+const { href, title, org, dateRange, description, tags } = Astro.props;
+---
+
+<a
+	href={href}
+	data-tags={tags.join(',')}
+	class="block rounded-lg border p-4 transition hover:shadow-md"
+	style={{ borderColor: 'var(--border-default)', background: 'var(--bg-chrome)' }}
+>
+	<h3 class="font-semibold" style={{ color: 'var(--text-heading)' }}>{title}</h3>
+	<p class="text-sm" style={{ color: 'var(--text-muted)' }}>{org} · {dateRange}</p>
+	<p class="mt-2 text-sm" style={{ color: 'var(--text-body)' }}>{description}</p>
+	<ul class="mt-3 flex flex-wrap gap-2">
+		{tags.map((tag) => (
+			<li class="rounded px-2 py-0.5 text-xs" style={{ background: 'var(--bg-page)', color: 'var(--text-secondary)' }}>
+				{tag}
+			</li>
+		))}
+	</ul>
+</a>

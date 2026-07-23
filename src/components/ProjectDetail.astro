@@ -1,0 +1,38 @@
+---
+import { render } from 'astro:content';
+import { useTranslations } from '../i18n/utils';
+import type { Locale } from '../i18n/ui';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  locale: Locale;
+}
+
+const { project, locale } = Astro.props;
+const t = useTranslations(locale);
+const { Content } = await render(project);
+---
+
+<article>
+	<h1 class="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>{project.data.title}</h1>
+	<p class="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>{project.data.org} · {project.data.dateRange}</p>
+
+	<ul class="mt-3 flex flex-wrap gap-2">
+		{project.data.tags.map((tag) => (
+			<li class="rounded px-2 py-0.5 text-xs" style={{ background: 'var(--bg-chrome)', color: 'var(--text-secondary)' }}>
+				{tag}
+			</li>
+		))}
+	</ul>
+
+	<p class="mt-6 leading-relaxed" style={{ color: 'var(--text-body)' }}>{project.data.description}</p>
+
+	{project.data.caseStudy ? (
+		<div class="prose mt-8">
+			<Content />
+		</div>
+	) : (
+		<p class="mt-8 italic" style={{ color: 'var(--text-muted)' }}>{t('projects.caseStudySoon')}</p>
+	)}
+</article>
