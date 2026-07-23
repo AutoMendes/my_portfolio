@@ -28,6 +28,8 @@ The system is organized as five sequential phases covering the full IaC lifecycl
 
 **Fixes as clickable GitHub suggestions, not just comments.** When the orchestrator blocks a PR, it doesn't stop at a report — it generates concrete fixes via the LLM and publishes them as native GitHub review suggestion blocks in the Files Changed tab, so a developer can click "Commit all suggestions" and apply them in one action instead of manually implementing what an AI agent already wrote out.
 
+![A blocked PR with LLM-generated fix suggestions shown as clickable GitHub review blocks](/images/aiops/pr_sugestoes_clicaveis_en.png)
+
 A developer opens a PR; seven agents analyze the diff in parallel and post structured comments. The orchestrator reads them and decides: no critical issues → approve and auto-merge (squash); otherwise → block and publish clickable fix suggestions the developer can accept and re-submit.
 
 <img src="/images/aiops/uc1_pr_review.png" alt="Diagram: developer opens a PR, seven agents review in parallel, orchestrator approves and auto-merges or blocks with suggestions" class="diagram-large" />
@@ -36,7 +38,7 @@ A developer opens a PR; seven agents analyze the diff in parallel and post struc
 
 **`iac_generator`, one module, five modes.** The same agent handles `generate` (Terraform/Helm templates from a natural-language prompt), `validate`, `fix`, `ci` (PR/push validation with a blocking verdict), and `cost` (Infracost-based estimation) — one codebase behind all five, rather than a separate tool per concern that would drift apart over time. In `validate` mode it reads the *entire* Terraform file set together rather than one file at a time, which avoids false positives from context that only exists elsewhere in the project (a provider version pinned in a different file, say). Findings are only ever reported with concrete evidence in the code, split into critical (hardcoded credentials, local backend, resources without a lifecycle block), warnings, and suggestions — always resolving to a structured `VERDICT: BLOCKED` or `VERDICT: APPROVED` a pipeline can act on directly.
 
-![The IaC agent validating a Terraform diff in the CI pipeline, publishing a structured verdict as a PR comment](/images/aiops/iac_validacao.png)
+![The IaC agent's validation report rendered on GitHub — structured critical findings with the problematic line and a suggested fix](/images/aiops/mcp_iac_issue.png)
 
 **Cloud-agnostic by design, including on-premises.** Beyond Azure, AWS, and GCP, `generate`/`validate`/`fix` ship with dedicated system prompts for local/on-premises setups — Terraform with local providers, Kubernetes namespaces via kubeconfig — since infrastructure without cloud access is still infrastructure that needs validating. Cost estimation in that mode skips Infracost entirely (it has no on-prem pricing to map to) and asks the LLM directly to estimate the resources required instead.
 
@@ -72,9 +74,17 @@ At the component level, this is an LLM client (Claude Desktop or the Claude Code
 
 <img src="/images/aiops/desktop_app_pacotes.png" alt="Package diagram of the desktop app: PyQt6 modules (engine, workers, window, dialogs, config) and their dependencies on shared prompts and external systems" class="diagram-large" />
 
+<div class="image-pair">
+<img src="/images/aiops/desktop_app_main.png" alt="The PyQt6 desktop app: config panel on the left, streaming output on the right" />
+<img src="/images/aiops/desktop_app_validate_en.png" alt="Result of a cloud IaC validation run in the desktop app, with structured diagnosis and verdict in the output panel" />
+</div>
+
 **On-premises validation, with the target machine's real capacity as context.** Selecting "Local" instead of a cloud provider switches the app to the same on-prem-specific prompts described above, for environments with no cloud account to validate against. To make cost/feasibility estimation there actually useful instead of a guess in the dark, the app introduces **machine profiles** — persistent records of a target machine's OS, CPU cores, RAM, disk, GPU, and network bandwidth, managed in the Settings window's Machines tab. Pick a profile when running a local estimate and it's passed to the LLM as context, letting it compare what the declared infrastructure actually needs against what that specific machine can provide — an edge server and a dev laptop get evaluated against their own real limits, not a generic assumption.
 
-![The desktop app's Machines tab: creating and managing persistent machine profiles (OS, CPU, RAM, disk, GPU, bandwidth) used for on-premises feasibility estimates](/images/aiops/desktop_app_machines.png)
+<div class="image-pair">
+<img src="/images/aiops/desktop_app_machines.png" alt="The desktop app's Machines tab: creating and managing persistent machine profiles (OS, CPU, RAM, disk, GPU, bandwidth) used for on-premises feasibility estimates" />
+<img src="/images/aiops/desktop_app_cost_local_en.png" alt="Resource estimation in the desktop app's local/on-premises mode, comparing required resources against the selected machine profile" />
+</div>
 
 For a DevOps user without CLI or CI/CD pipeline familiarity: validate IaC configurations, generate templates, estimate costs (cloud or local mode), and detect drift, choosing the LLM provider and — in local mode — a pre-configured machine profile. Unchanged IaC files between runs are served from an in-memory cache instead of re-hitting the API.
 
@@ -91,7 +101,3 @@ Deciding how much to actually trust the automation near things that matter — a
 ## Result
 
 A working pipeline demonstrated end to end with two deliberately paired demo APIs: a broken one with planted issues (hardcoded secrets, SQL injection, no auth, an O(n²) hot path, missing tests and docs) that the pipeline catches and blocks, and a secured version of the same API that sails through and auto-merges — proving the review agents catch what they're supposed to, not just that they run. Alongside it, a simulated pod crash triggers the full auto-healing loop (detect → read logs/events → diagnose → fix → confirm recovery → open/close a GitHub issue), and the IaC pipeline runs Terraform validation and Infracost-based cost estimation on every infrastructure change before it's applied.
-
-![A blocked PR with LLM-generated fix suggestions shown as clickable GitHub review blocks](/images/aiops/pr_sugestoes_clicaveis_en.png)
-
-![The PyQt6 desktop app: config panel on the left, streaming output on the right](/images/aiops/desktop_app_main.png)
