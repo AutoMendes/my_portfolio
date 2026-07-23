@@ -1,1 +1,45 @@
 @import "tailwindcss";
+
+/* Theme tokens ported from whoami_cv/src/index.css, so this site and the CV
+   share the same dark/light accent language. */
+:root {
+  --bg-body: #05080a;
+  --bg-page: #11181d;
+  --bg-chrome: #0c1215;
+
+  --text-body: #d9e0e1;
+  --text-heading: #f2f4f4;
+  --text-secondary: #b9c2c3;
+  --text-muted: #9aa7aa;
+
+  --accent: #d9a24f;
+  --accent-hover: #e7b568;
+  --accent-text: #17120a;
+
+  --border-default: #232f32;
+  --border-light: #24302f;
+}
+
+[data-theme='light'] {
+  --bg-body: #f4f5f6;
+  --bg-page: #ffffff;
+  --bg-chrome: #e8eaed;
+
+  --text-body: #1a1d20;
+  --text-heading: #0f1113;
+  --text-secondary: #3a3f44;
+  --text-muted: #5a6066;
+
+  --accent: #1e40af;
+  --accent-hover: #1e3a8a;
+  --accent-text: #ffffff;
+
+  --border-default: #d4d8dc;
+  --border-light: #dde0e4;
+}
+
+body {
+  background: var(--bg-body);
+  color: var(--text-body);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}

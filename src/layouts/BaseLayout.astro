@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
 import { getLangFromUrl, useTranslations } from '../i18n/utils';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { THEME_STORAGE_KEY } from '../lib/theme';
 
 interface Props {
   title: string;
@@ -21,6 +23,18 @@ const prefix = lang === 'en' ? '' : `/${lang}`;
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+		<script is:inline define:vars={{ key: THEME_STORAGE_KEY }}>
+			(function () {
+				var stored = localStorage.getItem(key);
+				var theme =
+					stored === 'dark' || stored === 'light'
+						? stored
+						: window.matchMedia('(prefers-color-scheme: light)').matches
+							? 'light'
+							: 'dark';
+				document.documentElement.setAttribute('data-theme', theme);
+			})();
+		</script>
 	</head>
 	<body class="flex min-h-screen flex-col">
 		<header class="border-b border-gray-200 dark:border-gray-800">
@@ -32,6 +46,7 @@ const prefix = lang === 'en' ? '' : `/${lang}`;
 					<li><a href={`${prefix}/about`}>{t('nav.about')}</a></li>
 					<li><a href={`${prefix}/contact`}>{t('nav.contact')}</a></li>
 				</ul>
+				<ThemeToggle client:load />
 			</nav>
 		</header>
 
