@@ -88,6 +88,10 @@ summary::-webkit-details-marker {
   max-width: 900px;
 }
 
+.prose img.diagram-medium {
+  max-width: 650px;
+}
+
 .prose .image-pair {
   display: flex;
   flex-wrap: wrap;

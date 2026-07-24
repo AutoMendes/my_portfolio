@@ -34,7 +34,7 @@ I volunteer with ANEIS, monitoring educational activities for gifted children. T
 
 **Context:** two personas (Child, Monitor) interacting with the platform as a whole.
 
-<img src="/images/bits-bots/c4-context-en.svg" alt="C4 context diagram: Child and Monitor interacting with the Bits & Bots platform" class="diagram-large" />
+<img src="/images/bits-bots/c4-context-en.svg" alt="C4 context diagram: Child and Monitor interacting with the Bits & Bots platform" class="diagram-medium" />
 
 **Containers:** React SPA served by Nginx, monitor-only React Native app, Node/Express backend, MongoDB, and an image bucket.
 
@@ -42,7 +42,7 @@ I volunteer with ANEIS, monitoring educational activities for gifted children. T
 
 **Use cases:** grouped by persona. The Child accesses courses, goes through levels, and submits quizzes; the Monitor manages the pedagogical content (including importing levels/materials from a `.md` file instead of typing markdown by hand) and validates each child's progress.
 
-<img src="/images/bits-bots/use-cases-en.svg" alt="Use case diagram: Child and Monitor and the actions each can perform" class="diagram-large" />
+<img src="/images/bits-bots/use-cases-en.svg" alt="Use case diagram: Child and Monitor and the actions each can perform" class="diagram-medium" />
 
 ## The hardest part: making local development work at all
 

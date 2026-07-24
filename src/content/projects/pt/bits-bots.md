@@ -34,7 +34,7 @@ Sou voluntário na ANEIS, a acompanhar atividades educativas para crianças sobr
 
 **Contexto:** duas personas (Criança, Monitor) a interagir com a plataforma como um todo.
 
-<img src="/images/bits-bots/c4-context-pt.svg" alt="Diagrama de contexto C4: Criança e Monitor a interagir com a plataforma Bits & Bots" class="diagram-large" />
+<img src="/images/bits-bots/c4-context-pt.svg" alt="Diagrama de contexto C4: Criança e Monitor a interagir com a plataforma Bits & Bots" class="diagram-medium" />
 
 **Containers:** SPA React servida por Nginx, app React Native só para monitores, backend Node/Express, MongoDB e bucket de imagens.
 
@@ -42,7 +42,7 @@ Sou voluntário na ANEIS, a acompanhar atividades educativas para crianças sobr
 
 **Casos de uso:** agrupados por persona. A Criança acede a cursos, percorre níveis e submete quizzes; o Monitor gere o conteúdo pedagógico (incluindo importar níveis/materiais a partir de um ficheiro `.md`, em vez de escrever markdown à mão) e valida o progresso de cada criança.
 
-<img src="/images/bits-bots/use-cases-pt.svg" alt="Diagrama de casos de uso: Criança e Monitor e as ações que cada um pode realizar" class="diagram-large" />
+<img src="/images/bits-bots/use-cases-pt.svg" alt="Diagrama de casos de uso: Criança e Monitor e as ações que cada um pode realizar" class="diagram-medium" />
 
 ## A parte mais difícil: fazer o desenvolvimento local funcionar
 
