@@ -53,3 +53,5 @@ Nada da arquitetura acima foi a parte difícil — a rede do WSL2 foi. O backend
 ## Resultado (em curso)
 
 Tanto a plataforma web como a app dos monitores estão em produção, com conteúdo de cursos, quizzes, acompanhamento de progresso e suporte offline a funcionar de ponta a ponta. É um projeto ativo, não terminado — continuo a ser o único developer, por isso a cobertura de testes está intencionalmente concentrada nos módulos com maior probabilidade de falhar em silêncio (autenticação, acompanhamento de progresso, a fila offline) em vez de tudo.
+
+Disponível em [bitsebots.online](https://bitsebots.online).

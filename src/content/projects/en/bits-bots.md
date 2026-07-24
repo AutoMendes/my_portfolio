@@ -53,3 +53,5 @@ None of the architecture above was the hard part — WSL2 networking was. The ba
 ## Result (in progress)
 
 Both the web platform and the monitor app are live and deployed, with course content, quizzes, progress tracking, and offline support working end to end. It's an active project, not a finished one — I'm still the only developer, so test coverage is intentionally focused on the modules most likely to break silently (auth, progress tracking, the offline queue) rather than everything.
+
+Live at [bitsebots.online](https://bitsebots.online).
