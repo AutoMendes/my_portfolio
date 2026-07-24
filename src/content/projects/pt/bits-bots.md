@@ -30,6 +30,22 @@ Sou voluntário na ANEIS, a acompanhar atividades educativas para crianças sobr
 
 **Uma app complementar que faz uma coisa só.** A app React Native (Expo) é só para monitores — deliberadamente sem ecrãs para crianças. Fala com a mesma API do backend, guarda o refresh token em `expo-secure-store` e o access token só em memória (não persistido), e partilha os design tokens com o frontend web para os dois não se desalinharem visualmente ao longo do tempo.
 
+## Arquitetura (C4) e casos de uso
+
+**Contexto:** duas personas (Criança, Monitor) a interagir com a plataforma como um todo.
+
+<img src="/images/bits-bots/c4-context.svg" alt="Diagrama de contexto C4: Criança e Monitor a interagir com a plataforma Bits & Bots" class="diagram-large" />
+
+**Containers:** SPA React servida por Nginx, app React Native só para monitores, backend Node/Express, MongoDB e bucket de imagens.
+
+<img src="/images/bits-bots/c4-container.svg" alt="Diagrama de containers C4: SPA React, app React Native, backend Node/Express, MongoDB e bucket de imagens" class="diagram-large" />
+
+**Casos de uso:** o que cada persona pode fazer na plataforma, incluindo o import de conteúdo a partir de ficheiro `.md`.
+
+<img src="/images/bits-bots/use-cases.svg" alt="Diagrama de casos de uso: Criança e Monitor e as ações que cada um pode realizar" class="diagram-large" />
+
+Fonte editável (PlantUML): [contexto](/diagrams/bits-bots/c4-context.puml), [containers](/diagrams/bits-bots/c4-container.puml), [casos de uso](/diagrams/bits-bots/use-cases.puml).
+
 ## A parte mais difícil: fazer o desenvolvimento local funcionar
 
 Nada da arquitetura acima foi a parte difícil — a rede do WSL2 foi. O backend e o Metro bundler correm dentro do namespace de rede do WSL2, que não é alcançável a partir de um telemóvel físico na mesma Wi-Fi, nem a partir do emulador do Android Studio sem tratamento especial. Fazer o telemóvel real de um monitor falar com um backend a correr no meu portátil exigiu configurar port proxies do lado do Windows (`netsh interface portproxy`) a encaminhar tanto a porta da API como a porta do bundler do Metro para dentro da VM do WSL2, além de forçar o Metro a anunciar o IP da LAN do Windows em vez do seu próprio IP interno do WSL2 via `REACT_NATIVE_PACKAGER_HOSTNAME`. Nada disto é específico do Bits & Bots — é o "imposto" de um ambiente de desenvolvimento Windows/WSL2 mais React Native — mas é o tipo de yak-shaving que come uma tarde inteira se não souberes que vem aí.

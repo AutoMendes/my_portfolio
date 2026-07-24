@@ -30,6 +30,22 @@ I volunteer with ANEIS, monitoring educational activities for gifted children. T
 
 **A companion app that does one job.** The React Native (Expo) app is monitor-only — deliberately no child-facing screens. It talks to the same backend API, keeps the refresh token in `expo-secure-store` and the access token in memory only (not persisted), and shares its design tokens with the web frontend so the two don't visually drift apart over time.
 
+## Architecture (C4) and use cases
+
+**Context:** two personas (Child, Monitor) interacting with the platform as a whole.
+
+<img src="/images/bits-bots/c4-context.svg" alt="C4 context diagram: Child and Monitor interacting with the Bits & Bots platform" class="diagram-large" />
+
+**Containers:** React SPA served by Nginx, monitor-only React Native app, Node/Express backend, MongoDB, and an image bucket.
+
+<img src="/images/bits-bots/c4-container.svg" alt="C4 container diagram: React SPA, React Native app, Node/Express backend, MongoDB, and image bucket" class="diagram-large" />
+
+**Use cases:** what each persona can do on the platform, including importing content from a `.md` file.
+
+<img src="/images/bits-bots/use-cases.svg" alt="Use case diagram: Child and Monitor and the actions each can perform" class="diagram-large" />
+
+Editable source (PlantUML): [context](/diagrams/bits-bots/c4-context.puml), [containers](/diagrams/bits-bots/c4-container.puml), [use cases](/diagrams/bits-bots/use-cases.puml).
+
 ## The hardest part: making local development work at all
 
 None of the architecture above was the hard part — WSL2 networking was. The backend and Metro bundler run inside WSL2's network namespace, which isn't reachable from a physical phone on the same Wi-Fi, or from Android Studio's emulator without special-casing. Getting a monitor's actual phone talking to a backend running on my laptop meant setting up Windows-side port proxies (`netsh interface portproxy`) forwarding both the API port and Metro's bundler port into the WSL2 VM, plus forcing Metro to advertise the Windows LAN IP instead of its own WSL2-internal one via `REACT_NATIVE_PACKAGER_HOSTNAME`. None of this is Bits & Bots-specific — it's the tax of a Windows/WSL2 dev environment plus React Native — but it's the kind of yak-shave that eats a whole afternoon if you don't know it's coming.

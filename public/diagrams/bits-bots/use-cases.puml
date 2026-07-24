@@ -1,0 +1,37 @@
+@startuml use-cases-bits-bots
+left to right direction
+title Bits & Bots Platform — Casos de Uso
+
+actor "Criança" as crianca
+actor "Monitor" as monitor
+
+rectangle "Bits & Bots Platform" {
+  usecase "Login com código + avatar" as UC1
+  usecase "Login com email + password" as UC2
+  usecase "Ver cursos" as UC3
+  usecase "Percorrer níveis de uma atividade" as UC4
+  usecase "Submeter quiz de fecho" as UC5
+  usecase "Ver o próprio progresso" as UC6
+  usecase "Criar/editar curso" as UC7
+  usecase "Criar/editar atividade\n(materiais, níveis, quiz)" as UC8
+  usecase "Importar conteúdo de ficheiro .md" as UC9
+  usecase "Validar atividade da criança" as UC10
+  usecase "Resetar tentativas de quiz" as UC11
+  usecase "Acompanhar progresso das crianças" as UC12
+}
+
+crianca --> UC1
+crianca --> UC3
+crianca --> UC4
+crianca --> UC5
+crianca --> UC6
+
+monitor --> UC2
+monitor --> UC7
+monitor --> UC8
+UC8 ..> UC9 : <<include>>
+monitor --> UC10
+monitor --> UC11
+monitor --> UC12
+
+@enduml
