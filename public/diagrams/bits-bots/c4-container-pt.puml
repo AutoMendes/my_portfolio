@@ -1,6 +1,7 @@
-@startuml c4-container-bits-bots
+@startuml c4-container-bits-bots-pt
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
+LAYOUT_LEFT_RIGHT()
 LAYOUT_WITH_LEGEND()
 title Bits & Bots Platform — Diagrama de Containers (C4)
 

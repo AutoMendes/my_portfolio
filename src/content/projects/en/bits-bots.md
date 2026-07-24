@@ -34,17 +34,17 @@ I volunteer with ANEIS, monitoring educational activities for gifted children. T
 
 **Context:** two personas (Child, Monitor) interacting with the platform as a whole.
 
-<img src="/images/bits-bots/c4-context.svg" alt="C4 context diagram: Child and Monitor interacting with the Bits & Bots platform" class="diagram-large" />
+<img src="/images/bits-bots/c4-context-en.svg" alt="C4 context diagram: Child and Monitor interacting with the Bits & Bots platform" class="diagram-large" />
 
 **Containers:** React SPA served by Nginx, monitor-only React Native app, Node/Express backend, MongoDB, and an image bucket.
 
-<img src="/images/bits-bots/c4-container.svg" alt="C4 container diagram: React SPA, React Native app, Node/Express backend, MongoDB, and image bucket" class="diagram-large" />
+<img src="/images/bits-bots/c4-container-en.svg" alt="C4 container diagram: React SPA, React Native app, Node/Express backend, MongoDB, and image bucket" class="diagram-large" />
 
 **Use cases:** what each persona can do on the platform, including importing content from a `.md` file.
 
-<img src="/images/bits-bots/use-cases.svg" alt="Use case diagram: Child and Monitor and the actions each can perform" class="diagram-large" />
+<img src="/images/bits-bots/use-cases-en.svg" alt="Use case diagram: Child and Monitor and the actions each can perform" class="diagram-large" />
 
-Editable source (PlantUML): [context](/diagrams/bits-bots/c4-context.puml), [containers](/diagrams/bits-bots/c4-container.puml), [use cases](/diagrams/bits-bots/use-cases.puml).
+Editable source (PlantUML): [context](/diagrams/bits-bots/c4-context-en.puml), [containers](/diagrams/bits-bots/c4-container-en.puml), [use cases](/diagrams/bits-bots/use-cases-en.puml).
 
 ## The hardest part: making local development work at all
 

@@ -1,0 +1,17 @@
+@startuml c4-context-bits-bots-en
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_LEFT_RIGHT()
+LAYOUT_WITH_LEGEND()
+title Bits & Bots Platform — Context Diagram (C4)
+
+Person(crianca, "Child", "6-16 years old, gifted student (ANEIS Braga partnership)")
+Person(monitor, "Monitor", "Volunteer who tracks the children's progress")
+
+System(bitsbots, "Bits & Bots Platform", "Web platform (+ monitor app) for robotics, electronics, programming and STEAM challenges: courses, activities, levels, quizzes and progress tracking")
+
+Rel(crianca, bitsbots, "Accesses courses, goes through levels, submits quizzes")
+Rel(monitor, bitsbots, "Creates/edits courses and activities, validates activities, tracks progress")
+
+SHOW_LEGEND()
+@enduml

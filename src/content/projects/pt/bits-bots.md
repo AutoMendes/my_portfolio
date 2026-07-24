@@ -34,17 +34,17 @@ Sou voluntário na ANEIS, a acompanhar atividades educativas para crianças sobr
 
 **Contexto:** duas personas (Criança, Monitor) a interagir com a plataforma como um todo.
 
-<img src="/images/bits-bots/c4-context.svg" alt="Diagrama de contexto C4: Criança e Monitor a interagir com a plataforma Bits & Bots" class="diagram-large" />
+<img src="/images/bits-bots/c4-context-pt.svg" alt="Diagrama de contexto C4: Criança e Monitor a interagir com a plataforma Bits & Bots" class="diagram-large" />
 
 **Containers:** SPA React servida por Nginx, app React Native só para monitores, backend Node/Express, MongoDB e bucket de imagens.
 
-<img src="/images/bits-bots/c4-container.svg" alt="Diagrama de containers C4: SPA React, app React Native, backend Node/Express, MongoDB e bucket de imagens" class="diagram-large" />
+<img src="/images/bits-bots/c4-container-pt.svg" alt="Diagrama de containers C4: SPA React, app React Native, backend Node/Express, MongoDB e bucket de imagens" class="diagram-large" />
 
 **Casos de uso:** o que cada persona pode fazer na plataforma, incluindo o import de conteúdo a partir de ficheiro `.md`.
 
-<img src="/images/bits-bots/use-cases.svg" alt="Diagrama de casos de uso: Criança e Monitor e as ações que cada um pode realizar" class="diagram-large" />
+<img src="/images/bits-bots/use-cases-pt.svg" alt="Diagrama de casos de uso: Criança e Monitor e as ações que cada um pode realizar" class="diagram-large" />
 
-Fonte editável (PlantUML): [contexto](/diagrams/bits-bots/c4-context.puml), [containers](/diagrams/bits-bots/c4-container.puml), [casos de uso](/diagrams/bits-bots/use-cases.puml).
+Fonte editável (PlantUML): [contexto](/diagrams/bits-bots/c4-context-pt.puml), [containers](/diagrams/bits-bots/c4-container-pt.puml), [casos de uso](/diagrams/bits-bots/use-cases-pt.puml).
 
 ## A parte mais difícil: fazer o desenvolvimento local funcionar
 

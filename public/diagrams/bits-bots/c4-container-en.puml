@@ -1,0 +1,28 @@
+@startuml c4-container-bits-bots-en
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_LEFT_RIGHT()
+LAYOUT_WITH_LEGEND()
+title Bits & Bots Platform — Container Diagram (C4)
+
+Person(crianca, "Child", "6-16 years old")
+Person(monitor, "Monitor", "ANEIS Braga volunteer")
+
+System_Boundary(bitsbots, "Bits & Bots Platform") {
+  Container(spa, "Web App", "React + Vite, Tailwind CSS", "SPA served by Nginx; the only publicly exposed piece; reverse-proxies /api to the backend")
+  Container(mobile, "Monitor App", "React Native / Expo", "Monitor-only app; refresh token in expo-secure-store, access token in memory only")
+  Container(api, "Backend API", "Node.js + Express (ESM)", "Business logic: quiz grading, progress sequencing, JWT authentication (access + refresh)")
+  ContainerDb(db, "Database", "MongoDB (via Mongoose)", "Curso (nested: Atividades → Níveis + Quiz), Matricula, Monitor, Crianca")
+  ContainerDb(bucket, "Image bucket", "Cloud Storage", "Images uploaded for activity content")
+}
+
+Rel(crianca, spa, "Uses", "HTTPS")
+Rel(monitor, spa, "Uses", "HTTPS")
+Rel(monitor, mobile, "Uses", "HTTPS")
+Rel(spa, api, "Calls", "HTTPS/JSON via /api proxy")
+Rel(mobile, api, "Calls", "HTTPS/JSON")
+Rel(api, db, "Reads/writes", "Mongoose")
+Rel(api, bucket, "Uploads/serves images", "HTTPS")
+
+SHOW_LEGEND()
+@enduml

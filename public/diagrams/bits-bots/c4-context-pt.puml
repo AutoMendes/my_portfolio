@@ -1,6 +1,7 @@
-@startuml c4-context-bits-bots
+@startuml c4-context-bits-bots-pt
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
+LAYOUT_LEFT_RIGHT()
 LAYOUT_WITH_LEGEND()
 title Bits & Bots Platform — Diagrama de Contexto (C4)
 
