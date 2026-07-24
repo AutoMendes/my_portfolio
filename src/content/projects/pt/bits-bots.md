@@ -1,7 +1,7 @@
 ---
 title: "Bits & Bots — Plataforma para Crianças Sobredotadas"
 org: "Projeto Independente (em parceria com a ANEIS Braga)"
-dateRange: "Jul 2026 – Presente"
+dateRange: "Jul 2026 – Set 2026"
 description: >-
   Uma plataforma de educação STEAM (robótica, eletrónica, programação e desafios STEAM) para
   crianças sobredotadas dos 6 aos 16 anos, construída em parceria com a ANEIS Braga, com
@@ -30,6 +30,8 @@ Sou voluntário na ANEIS, a acompanhar atividades educativas para crianças sobr
 
 **Uma app complementar que faz uma coisa só.** A app React Native (Expo) é só para monitores — deliberadamente sem ecrãs para crianças. Fala com a mesma API do backend, guarda o refresh token em `expo-secure-store` e o access token só em memória (não persistido), e partilha os design tokens com o frontend web para os dois não se desalinharem visualmente ao longo do tempo.
 
+**Offline por defeito, não como extra.** A app dos monitores assume que a sala de aula pode não ter wifi: leituras ficam em cache persistida entre reinícios, e ações feitas offline (validar atividade, criar um Aluno) entram numa fila FIFO local em vez de falhar. A fila resolve os dois problemas clássicos deste padrão — reconciliação de IDs temporários quando uma entidade nova é criada offline, e propagação de falhas a ações dependentes — e cada item carrega uma chave de idempotência, com o backend a deduplicar pedidos repetidos (coleção Mongo com TTL). Nada disto é visível para o monitor no dia a dia; é precisamente o ponto.
+
 ## Arquitetura (C4) e casos de uso
 
 **Contexto:** duas personas (Criança, Monitor) a interagir com a plataforma como um todo.
@@ -50,4 +52,4 @@ Nada da arquitetura acima foi a parte difícil — a rede do WSL2 foi. O backend
 
 ## Resultado (em curso)
 
-Tanto a plataforma web como a app dos monitores estão em produção, com conteúdo de cursos, quizzes e acompanhamento de progresso a funcionar de ponta a ponta. É um projeto ativo, não terminado — continuo a ser o único developer, por isso a cobertura de testes está intencionalmente concentrada nos módulos com maior probabilidade de falhar em silêncio (autenticação, acompanhamento de progresso) em vez de tudo.
+Tanto a plataforma web como a app dos monitores estão em produção, com conteúdo de cursos, quizzes, acompanhamento de progresso e suporte offline a funcionar de ponta a ponta. É um projeto ativo, não terminado — continuo a ser o único developer, por isso a cobertura de testes está intencionalmente concentrada nos módulos com maior probabilidade de falhar em silêncio (autenticação, acompanhamento de progresso, a fila offline) em vez de tudo.

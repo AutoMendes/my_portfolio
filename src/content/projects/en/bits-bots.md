@@ -1,7 +1,7 @@
 ---
 title: "Bits & Bots — Platform for Gifted Children"
 org: "Independent Project (in partnership with ANEIS Braga)"
-dateRange: "Jul 2026 – Present"
+dateRange: "Jul 2026 – Sep 2026"
 description: >-
   A STEAM education platform (robotics, electronics, programming, and STEAM challenges) for
   gifted children aged 6–16, built in partnership with ANEIS Braga, with progress tracking for
@@ -30,6 +30,8 @@ I volunteer with ANEIS, monitoring educational activities for gifted children. T
 
 **A companion app that does one job.** The React Native (Expo) app is monitor-only — deliberately no child-facing screens. It talks to the same backend API, keeps the refresh token in `expo-secure-store` and the access token in memory only (not persisted), and shares its design tokens with the web frontend so the two don't visually drift apart over time.
 
+**Offline by default, not as an afterthought.** The monitor app assumes the classroom might have no wifi: reads are persisted across restarts, and actions taken offline (validating an activity, creating a Student) go into a local FIFO queue instead of failing outright. The queue solves the two classic problems of this pattern — reconciling temporary ids once a newly-created entity syncs, and cascading failure to dependent actions — and every queued item carries an idempotency key, with the backend deduplicating replayed requests (a TTL-indexed Mongo collection). None of this is visible to the monitor day-to-day; that's the point.
+
 ## Architecture (C4) and use cases
 
 **Context:** two personas (Child, Monitor) interacting with the platform as a whole.
@@ -50,4 +52,4 @@ None of the architecture above was the hard part — WSL2 networking was. The ba
 
 ## Result (in progress)
 
-Both the web platform and the monitor app are live and deployed, with course content, quizzes, and progress tracking working end to end. It's an active project, not a finished one — I'm still the only developer, so test coverage is intentionally focused on the modules most likely to break silently (auth, progress tracking) rather than everything.
+Both the web platform and the monitor app are live and deployed, with course content, quizzes, progress tracking, and offline support working end to end. It's an active project, not a finished one — I'm still the only developer, so test coverage is intentionally focused on the modules most likely to break silently (auth, progress tracking, the offline queue) rather than everything.
