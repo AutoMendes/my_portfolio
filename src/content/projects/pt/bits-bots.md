@@ -50,8 +50,8 @@ Sou voluntário na ANEIS, a acompanhar atividades educativas para crianças sobr
 
 Nada da arquitetura acima foi a parte difícil — a rede do WSL2 foi. O backend e o Metro bundler correm dentro do namespace de rede do WSL2, que não é alcançável a partir de um telemóvel físico na mesma Wi-Fi, nem a partir do emulador do Android Studio sem tratamento especial. Fazer o telemóvel real de um monitor falar com um backend a correr no meu portátil exigiu configurar port proxies do lado do Windows (`netsh interface portproxy`) a encaminhar tanto a porta da API como a porta do bundler do Metro para dentro da VM do WSL2, além de forçar o Metro a anunciar o IP da LAN do Windows em vez do seu próprio IP interno do WSL2 via `REACT_NATIVE_PACKAGER_HOSTNAME`. Nada disto é específico do Bits & Bots — é o "imposto" de um ambiente de desenvolvimento Windows/WSL2 mais React Native — mas é o tipo de yak-shaving que come uma tarde inteira se não souberes que vem aí.
 
-## Resultado (em curso)
+## Resultado
 
-Tanto a plataforma web como a app dos monitores estão em produção, com conteúdo de cursos, quizzes, acompanhamento de progresso e suporte offline a funcionar de ponta a ponta. É um projeto ativo, não terminado — continuo a ser o único developer, por isso a cobertura de testes está intencionalmente concentrada nos módulos com maior probabilidade de falhar em silêncio (autenticação, acompanhamento de progresso, a fila offline) em vez de tudo.
+Tanto a plataforma web como a app dos monitores estão em produção, com conteúdo de cursos, quizzes, acompanhamento de progresso e suporte offline a funcionar de ponta a ponta. Fui o único developer ao longo do projeto, por isso a cobertura de testes ficou intencionalmente concentrada nos módulos com maior probabilidade de falhar em silêncio (autenticação, acompanhamento de progresso, a fila offline) em vez de tudo.
 
 Disponível em [bitsebots.online](https://bitsebots.online).
