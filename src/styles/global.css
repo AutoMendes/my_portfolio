@@ -75,6 +75,11 @@ summary::-webkit-details-marker {
   --tw-prose-code: var(--text-heading);
 }
 
+.prose code {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 .prose img {
   max-width: 560px;
   width: 100%;
