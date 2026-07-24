@@ -40,11 +40,9 @@ I volunteer with ANEIS, monitoring educational activities for gifted children. T
 
 <img src="/images/bits-bots/c4-container-en.svg" alt="C4 container diagram: React SPA, React Native app, Node/Express backend, MongoDB, and image bucket" class="diagram-large" />
 
-**Use cases:** what each persona can do on the platform, including importing content from a `.md` file.
+**Use cases:** grouped by persona. The Child accesses courses, goes through levels, and submits quizzes; the Monitor manages the pedagogical content (including importing levels/materials from a `.md` file instead of typing markdown by hand) and validates each child's progress.
 
 <img src="/images/bits-bots/use-cases-en.svg" alt="Use case diagram: Child and Monitor and the actions each can perform" class="diagram-large" />
-
-Editable source (PlantUML): [context](/diagrams/bits-bots/c4-context-en.puml), [containers](/diagrams/bits-bots/c4-container-en.puml), [use cases](/diagrams/bits-bots/use-cases-en.puml).
 
 ## The hardest part: making local development work at all
 
